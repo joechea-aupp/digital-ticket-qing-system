@@ -36,57 +36,88 @@
         }
         
         .agents-display {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 30px;
             margin-top: 30px;
         }
         
-        .agent-display-card {
+        .agents-table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+            overflow: hidden;
+        }
+        
+        .agents-table thead {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            border-radius: 12px;
-            padding: 30px;
             color: white;
-            text-align: center;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
         }
         
-        .agent-display-name {
-            font-size: 1.8em;
-            font-weight: bold;
-            margin-bottom: 20px;
-            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-        }
-        
-        .agent-display-ticket {
-            background: rgba(255, 255, 255, 0.2);
-            border-radius: 10px;
-            padding: 30px;
-            backdrop-filter: blur(10px);
-        }
-        
-        .agent-display-label {
-            font-size: 1.2em;
-            margin-bottom: 15px;
-            opacity: 0.9;
-        }
-        
-        .agent-display-number {
-            font-size: 5em;
-            font-weight: bold;
-            line-height: 1;
-            text-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
-        }
-        
-        .agent-display-number.empty {
-            font-size: 2em;
-            opacity: 0.7;
-        }
-        
-        .agent-display-customer {
+        .agents-table th {
+            padding: 20px;
+            text-align: left;
             font-size: 1.3em;
-            margin-top: 15px;
             font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .agents-table td {
+            padding: 25px 20px;
+            border-bottom: 2px solid #f0f0f0;
+            font-size: 1.1em;
+        }
+        
+        .agents-table tbody tr:last-child td {
+            border-bottom: none;
+        }
+        
+        .agents-table tbody tr {
+            transition: background-color 0.2s;
+        }
+        
+        .agents-table tbody tr:hover {
+            background-color: #f8f9ff;
+        }
+        
+        .counter-name {
+            font-size: 1.5em;
+            font-weight: bold;
+            color: #333;
+        }
+        
+        .ticket-number-cell {
+            text-align: center;
+        }
+        
+        .ticket-badge-large {
+            display: inline-block;
+            padding: 15px 25px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 8px;
+            font-size: 2.5em;
+            font-weight: bold;
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+        }
+        
+        .waiting-badge {
+            display: inline-block;
+            padding: 10px 20px;
+            background-color: #f0f0f0;
+            color: #999;
+            border-radius: 8px;
+            font-size: 1.3em;
+            font-style: italic;
+        }
+        
+        .customer-name-cell {
+            font-size: 1.4em;
+            color: #333;
+            font-weight: 500;
+        }
+        
+        .no-customer {
+            color: #999;
+            font-style: italic;
         }
         
         .empty-state {
@@ -249,26 +280,46 @@
             // Update agents display
             if (!data.agents || data.agents.length === 0) {
                 agentsDisplayEl.innerHTML = `
-                    <div class="empty-state" style="grid-column: 1/-1;">
+                    <div class="empty-state">
                         <h2>No Counters Active</h2>
                         <p>Please wait for counters to be added...</p>
                     </div>
                 `;
             } else {
-                agentsDisplayEl.innerHTML = data.agents.map(agent => `
-                    <div class="agent-display-card">
-                        <div class="agent-display-name">${agent.name}</div>
-                        <div class="agent-display-ticket">
-                            <div class="agent-display-label">Now Serving</div>
-                            ${agent.currentTicket ? `
-                                <div class="agent-display-number">#${agent.currentTicket.id}</div>
-                                <div class="agent-display-customer">${agent.currentTicket.name}</div>
-                            ` : `
-                                <div class="agent-display-number empty">Waiting</div>
-                            `}
-                        </div>
-                    </div>
-                `).join('');
+                agentsDisplayEl.innerHTML = `
+                    <table class="agents-table">
+                        <thead>
+                            <tr>
+                                <th>Counter</th>
+                                <th>Now Serving</th>
+                                <th>Customer Name</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${data.agents.map(agent => `
+                                <tr>
+                                    <td>
+                                        <div class="counter-name">${agent.name}</div>
+                                    </td>
+                                    <td class="ticket-number-cell">
+                                        ${agent.currentTicket ? `
+                                            <span class="ticket-badge-large">#${agent.currentTicket.id}</span>
+                                        ` : `
+                                            <span class="waiting-badge">Waiting</span>
+                                        `}
+                                    </td>
+                                    <td class="customer-name-cell">
+                                        ${agent.currentTicket ? `
+                                            ${agent.currentTicket.name}
+                                        ` : `
+                                            <span class="no-customer">-</span>
+                                        `}
+                                    </td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                `;
             }
         }
         
