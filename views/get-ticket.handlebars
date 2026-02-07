@@ -149,6 +149,11 @@
             margin: 20px 0;
             text-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
         }
+
+        .ticket-number.expired {
+            color: #b3b3b3;
+            text-decoration: line-through;
+        }
         
         .position-info {
             font-size: 1.1em;
@@ -216,6 +221,11 @@
             font-size: 0.9em;
             color: #666;
             margin-top: 5px;
+        }
+        
+        .tickets-remaining-number.expired {
+            color: #999;
+            text-decoration: line-through;
         }
     </style>
 </head>
@@ -380,14 +390,25 @@
             
             const ticketsRemaining = myTicket.id - currentServingTicketId;
             
-            if (ticketsRemaining <= 0) {
+            if (ticketsRemaining < 0) {
+                // Your ticket has passed - expired
+                display.textContent = 'PASSED';
+                display.className = 'tickets-remaining-number';
+                text.textContent = 'Your ticket has passed. Please contact the counter.';
+                document.getElementById('ticketNumber').classList.add('expired');
+                container.classList.add('show');
+            } else if (ticketsRemaining === 0) {
                 // Your turn or already passed
-                display.textContent = '0';
+                display.textContent = 'Your turn!';
+                display.className = 'tickets-remaining-number';
                 text.textContent = "It's your turn!";
+                document.getElementById('ticketNumber').classList.remove('expired');
                 container.classList.add('show');
             } else {
                 display.textContent = ticketsRemaining;
+                display.className = 'tickets-remaining-number';
                 text.textContent = ticketsRemaining === 1 ? 'ticket ahead of you' : 'tickets ahead of you';
+                document.getElementById('ticketNumber').classList.remove('expired');
                 container.classList.add('show');
             }
         }
@@ -461,7 +482,9 @@
         
         function showTicket(ticket, position) {
             myTicket = ticket;
-            document.getElementById('ticketNumber').textContent = ticket.id;
+            const ticketNumberEl = document.getElementById('ticketNumber');
+            ticketNumberEl.textContent = ticket.id;
+            ticketNumberEl.classList.remove('expired');
             
             document.getElementById('formContainer').style.display = 'none';
             document.getElementById('resultContainer').classList.add('show');
@@ -473,6 +496,7 @@
             document.getElementById('userName').value = '';
             document.getElementById('formContainer').style.display = 'block';
             document.getElementById('resultContainer').classList.remove('show');
+            document.getElementById('ticketNumber').classList.remove('expired');
             document.getElementById('errorAlert').classList.remove('show');
             document.getElementById('ticketsRemainingContainer').classList.remove('show');
             clearTicketFromStorage();
