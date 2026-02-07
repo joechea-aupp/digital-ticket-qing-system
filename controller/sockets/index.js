@@ -1,15 +1,13 @@
 let ticketQueue = [];
 let ticketCounter = 1;
-let currentTicket = null;
-let previousTicket = null;
+let agents = []; // Array of agents/counters: {id, name, currentTicket, previousTicket}
+let agentCounter = 1;
 
 const setupSockets = (wss, serverSessionId) => {
     const broadcastToDisplay = () => {
         // Broadcast to display clients (ticket-queue page)
         const displayData = {
-            currentTicket: currentTicket,
-            nextTicket: ticketQueue.length > 0 ? ticketQueue[0] : null,
-            previousTicket: previousTicket,
+            agents: agents,
             queueRemaining: ticketQueue.length
         };
         wss.clients.forEach(client => {
@@ -20,10 +18,10 @@ const setupSockets = (wss, serverSessionId) => {
     };
 
     const broadcastToGetTicket = () => {
-        // Broadcast current serving ticket to get-ticket clients
+        // Broadcast current serving tickets to get-ticket clients
         const getTicketData = {
             type: 'currentServing',
-            currentTicket: currentTicket,
+            agents: agents,
             queueRemaining: ticketQueue.length
         };
         wss.clients.forEach(client => {
@@ -34,9 +32,9 @@ const setupSockets = (wss, serverSessionId) => {
     };
 
     const broadcastToAdmin = () => {
-        // Broadcast full queue to admin clients
+        // Broadcast full queue and agents to admin clients
         const adminData = {
-            currentTicket: currentTicket,
+            agents: agents,
             queue: ticketQueue,
             queueRemaining: ticketQueue.length
         };
@@ -60,9 +58,7 @@ const setupSockets = (wss, serverSessionId) => {
         
         // Send initial state
         ws.send(JSON.stringify({
-            currentTicket: currentTicket,
-            nextTicket: ticketQueue.length > 0 ? ticketQueue[0] : null,
-            previousTicket: previousTicket,
+            agents: agents,
             queueRemaining: ticketQueue.length
         }));
     });
@@ -75,7 +71,7 @@ const setupSockets = (wss, serverSessionId) => {
         // Send initial current serving state with server session ID
         ws.send(JSON.stringify({
             type: 'currentServing',
-            currentTicket: currentTicket,
+            agents: agents,
             queueRemaining: ticketQueue.length,
             serverSessionId: serverSessionId
         }));
@@ -119,7 +115,7 @@ const setupSockets = (wss, serverSessionId) => {
         
         // Send initial state
         ws.send(JSON.stringify({
-            currentTicket: currentTicket,
+            agents: agents,
             queue: ticketQueue,
             queueRemaining: ticketQueue.length
         }));
@@ -129,11 +125,58 @@ const setupSockets = (wss, serverSessionId) => {
                 const data = JSON.parse(message);
                 console.log(`Received message on /ws/admin:`, data);
                 
-                if (data.action === 'nextTicket') {
-                    // Move to next ticket
+                if (data.action === 'addAgent') {
+                    // Add a new agent/counter
+                    const newAgent = {
+                        id: agentCounter++,
+                        name: data.agentName || `Counter ${agentCounter - 1}`,
+                        currentTicket: null,
+                        previousTicket: null
+                    };
+                    agents.push(newAgent);
+                    broadcastAll();
+                    ws.send(JSON.stringify({ 
+                        success: true, 
+                        message: 'Agent added successfully',
+                        agent: newAgent 
+                    }));
+                } else if (data.action === 'removeAgent') {
+                    // Remove an agent/counter
+                    const agentIndex = agents.findIndex(a => a.id === data.agentId);
+                    if (agentIndex !== -1) {
+                        // If agent has a current ticket, return it to queue
+                        const agent = agents[agentIndex];
+                        if (agent.currentTicket) {
+                            ticketQueue.unshift(agent.currentTicket);
+                        }
+                        agents.splice(agentIndex, 1);
+                        broadcastAll();
+                        ws.send(JSON.stringify({ 
+                            success: true, 
+                            message: 'Agent removed successfully' 
+                        }));
+                    } else {
+                        ws.send(JSON.stringify({ 
+                            success: false, 
+                            error: 'Agent not found' 
+                        }));
+                    }
+                } else if (data.action === 'nextTicket') {
+                    // Assign next ticket to a specific agent
+                    const agentId = data.agentId;
+                    const agent = agents.find(a => a.id === agentId);
+                    
+                    if (!agent) {
+                        ws.send(JSON.stringify({ 
+                            success: false, 
+                            error: 'Agent not found' 
+                        }));
+                        return;
+                    }
+                    
                     if (ticketQueue.length > 0) {
-                        previousTicket = currentTicket;
-                        currentTicket = ticketQueue.shift();
+                        agent.previousTicket = agent.currentTicket;
+                        agent.currentTicket = ticketQueue.shift();
                         broadcastAll();
                     } else {
                         ws.send(JSON.stringify({ 
@@ -142,9 +185,20 @@ const setupSockets = (wss, serverSessionId) => {
                         }));
                     }
                 } else if (data.action === 'clearCurrent') {
-                    // Clear current ticket
-                    previousTicket = currentTicket;
-                    currentTicket = null;
+                    // Clear current ticket for a specific agent
+                    const agentId = data.agentId;
+                    const agent = agents.find(a => a.id === agentId);
+                    
+                    if (!agent) {
+                        ws.send(JSON.stringify({ 
+                            success: false, 
+                            error: 'Agent not found' 
+                        }));
+                        return;
+                    }
+                    
+                    agent.previousTicket = agent.currentTicket;
+                    agent.currentTicket = null;
                     broadcastAll();
                 }
             } catch (e) {
