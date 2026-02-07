@@ -3,7 +3,7 @@ let ticketCounter = 1;
 let currentTicket = null;
 let previousTicket = null;
 
-const setupSockets = (wss) => {
+const setupSockets = (wss, serverSessionId) => {
     const broadcastToDisplay = () => {
         // Broadcast to display clients (ticket-queue page)
         const displayData = {
@@ -72,11 +72,12 @@ const setupSockets = (wss) => {
         console.log("New connection on /ws/get-ticket");
         ws.clientType = 'get-ticket';
         
-        // Send initial current serving state
+        // Send initial current serving state with server session ID
         ws.send(JSON.stringify({
             type: 'currentServing',
             currentTicket: currentTicket,
-            queueRemaining: ticketQueue.length
+            queueRemaining: ticketQueue.length,
+            serverSessionId: serverSessionId
         }));
 
         ws.on("message", (message) => {
@@ -93,11 +94,12 @@ const setupSockets = (wss) => {
                     };
                     ticketQueue.push(newTicket);
                     
-                    // Send confirmation to this client
+                    // Send confirmation to this client with server session ID
                     ws.send(JSON.stringify({
                         success: true,
                         ticket: newTicket,
-                        position: ticketQueue.length
+                        position: ticketQueue.length,
+                        serverSessionId: serverSessionId
                     }));
                     
                     // Broadcast updated queue

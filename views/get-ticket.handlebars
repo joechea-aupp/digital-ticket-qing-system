@@ -179,6 +179,12 @@
             border: 1px solid #ef5350;
         }
         
+        .alert.warning {
+            background-color: #fff3e0;
+            color: #e65100;
+            border: 1px solid #ff9800;
+        }
+        
         .current-serving {
             background: #f8f9fa;
             border-left: 4px solid #667eea;
@@ -223,6 +229,7 @@
         </div>
         
         <div class="alert error" id="errorAlert"></div>
+        <div class="alert warning" id="expiredAlert"></div>
         
         <div id="formContainer">
             <div class="form-group">
@@ -254,6 +261,7 @@
     <script>
         let ws = null;
         const STORAGE_KEY = 'ticketData';
+        let currentServerSessionId = null;
         
         function connectWebSocket() {
             const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
@@ -269,14 +277,23 @@
                 try {
                     const data = JSON.parse(event.data);
                     
+                    // Store server session ID when received
+                    if (data.serverSessionId) {
+                        currentServerSessionId = data.serverSessionId;
+                    }
+                    
                     // Handle current serving updates
                     if (data.type === 'currentServing') {
                         updateCurrentServing(data.currentTicket);
+                        // Validate stored ticket against server session ID
+                        if (currentServerSessionId) {
+                            validateStoredTicket(currentServerSessionId);
+                        }
                     }
                     // Handle ticket assignment
                     else if (data.success && data.ticket) {
                         showTicket(data.ticket, data.position);
-                        saveTicketToStorage(data.ticket, data.position);
+                        saveTicketToStorage(data.ticket, data.position, data.serverSessionId);
                     } else if (data.error) {
                         showError(data.error);
                     }
@@ -325,10 +342,11 @@
             }
         }
         
-        function saveTicketToStorage(ticket, position) {
+        function saveTicketToStorage(ticket, position, serverSessionId) {
             const ticketData = {
                 ticket: ticket,
                 position: position,
+                serverSessionId: serverSessionId,
                 timestamp: new Date().getTime()
             };
             localStorage.setItem(STORAGE_KEY, JSON.stringify(ticketData));
@@ -339,11 +357,30 @@
                 const stored = localStorage.getItem(STORAGE_KEY);
                 if (stored) {
                     const ticketData = JSON.parse(stored);
-                    // Show stored ticket
+                    // Show stored ticket (will be validated when server session ID arrives)
                     showTicket(ticketData.ticket, ticketData.position);
                 }
             } catch (e) {
                 console.error('Error loading ticket from storage:', e);
+            }
+        }
+        
+        function validateStoredTicket(serverSessionId) {
+            try {
+                const stored = localStorage.getItem(STORAGE_KEY);
+                if (!stored) return;
+                
+                const ticketData = JSON.parse(stored);
+                
+                // Check if server session ID matches
+                if (ticketData.serverSessionId && ticketData.serverSessionId !== serverSessionId) {
+                    // Ticket is from a previous server session - expired
+                    console.log('Ticket expired: server session changed');
+                    showExpiredTicketMessage();
+                    clearTicketFromStorage();
+                }
+            } catch (e) {
+                console.error('Error validating stored ticket:', e);
             }
         }
         
@@ -394,6 +431,20 @@
             alert.textContent = message;
             alert.classList.add('show');
             setTimeout(() => alert.classList.remove('show'), 3000);
+        }
+        
+        function showExpiredTicketMessage() {
+            const alert = document.getElementById('expiredAlert');
+            alert.innerHTML = '<strong>Ticket Expired:</strong> The server has been restarted. Please get a new ticket.';
+            alert.classList.add('show');
+            
+            // Reset form to allow getting a new ticket
+            document.getElementById('userName').value = '';
+            document.getElementById('formContainer').style.display = 'block';
+            document.getElementById('resultContainer').classList.remove('show');
+            
+            // Keep the message visible for 10 seconds
+            setTimeout(() => alert.classList.remove('show'), 10000);
         }
         
         // Allow Enter key to submit
