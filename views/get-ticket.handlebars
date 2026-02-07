@@ -398,10 +398,23 @@
                 document.getElementById('ticketNumber').classList.add('expired');
                 container.classList.add('show');
             } else if (ticketsRemaining === 0) {
-                // Your turn or already passed
+                // Your turn - find which agent is serving this ticket
+                let servingAgent = null;
+                if (agents && agents.length > 0) {
+                    servingAgent = agents.find(agent => 
+                        agent.currentTicket && agent.currentTicket.id === myTicket.id
+                    );
+                }
+                
                 display.textContent = 'Your turn!';
                 display.className = 'tickets-remaining-number';
-                text.textContent = "It's your turn!";
+                
+                if (servingAgent) {
+                    text.textContent = `Please go to counter ${servingAgent.name}`;
+                } else {
+                    text.textContent = "It's your turn! Please proceed to the counter.";
+                }
+                
                 document.getElementById('ticketNumber').classList.remove('expired');
                 container.classList.add('show');
             } else {
