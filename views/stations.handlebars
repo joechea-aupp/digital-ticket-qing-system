@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{title}}</title>
+    <style>
+        html, body {
+            height: 100%;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            max-width: none;
+            padding: 20px;
+            margin: 0;
+        }
+
+        .container {
+            background-color: white;
+            padding: 40px;
+            border-radius: 12px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+            max-width: 900px;
+            width: 100%;
+            margin: 0 auto;
+        }
+
+        h1 {
+            color: #333;
+            margin: 0 0 10px 0;
+            text-align: center;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 30px;
+        }
+
+        .stations-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .station-card {
+            background-color: #f9f9f9;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 20px;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-decoration: none;
+            color: inherit;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .station-card:hover {
+            border-color: #667eea;
+            box-shadow: 0 5px 20px rgba(102, 126, 234, 0.2);
+            transform: translateY(-3px);
+        }
+
+        .station-card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .station-name {
+            font-size: 1.2em;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .station-id {
+            background-color: #667eea;
+            color: white;
+            padding: 5px 10px;
+            border-radius: 20px;
+            font-size: 0.85em;
+            font-weight: 600;
+        }
+
+        .station-status {
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px solid #e0e0e0;
+        }
+
+        .status-label {
+            font-size: 0.85em;
+            color: #999;
+            margin-bottom: 5px;
+        }
+
+        .status-value {
+            font-size: 0.95em;
+            color: #333;
+            font-weight: 600;
+        }
+
+        .status-empty {
+            color: #999;
+            font-style: italic;
+        }
+
+        .queue-indicator {
+            margin-top: 20px;
+            padding: 12px;
+            background-color: #f0f0f0;
+            border-radius: 6px;
+            text-align: center;
+            font-size: 0.9em;
+        }
+
+        .queue-indicator strong {
+            color: #667eea;
+        }
+
+        .back-button {
+            display: inline-block;
+            margin-bottom: 20px;
+            padding: 10px 20px;
+            background-color: #9e9e9e;
+            color: white;
+            text-decoration: none;
+            border-radius: 6px;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+
+        .back-button:hover {
+            background-color: #757575;
+            transform: translateX(-3px);
+        }
+
+        @media (max-width: 600px) {
+            .container {
+                padding: 20px;
+            }
+
+            .stations-grid {
+                grid-template-columns: 1fr;
+            }
+
+            h1 {
+                font-size: 1.5em;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <a href="/" class="back-button">← Back to Home</a>
+        
+        <h1>{{title}}</h1>
+        <p class="subtitle">Click on a station to manage tickets</p>
+
+        <div id="stationsContainer" class="stations-grid"></div>
+        
+        <div id="queueInfo" style="text-align: center; margin-top: 30px; padding: 20px; background-color: #f0f0f0; border-radius: 8px;">
+            <strong id="queueRemaining">0</strong> tickets remaining in queue
+        </div>
+    </div>
+
+    <script>
+        let socket;
+
+        // Initialize WebSocket
+        function initWebSocket() {
+            const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+            socket = new WebSocket(protocol + '//' + window.location.host + '/ws/stations');
+
+            socket.onopen = () => {
+                console.log('WebSocket connected');
+            };
+
+            socket.onmessage = (event) => {
+                const data = JSON.parse(event.data);
+                if (data.type === 'stations') {
+                    renderStations(data);
+                }
+            };
+
+            socket.onerror = (error) => {
+                console.error('WebSocket error:', error);
+            };
+
+            socket.onclose = () => {
+                console.log('WebSocket disconnected, reconnecting in 3 seconds...');
+                setTimeout(initWebSocket, 3000);
+            };
+        }
+
+        function renderStations(data) {
+            if (!data || !data.stations) {
+                return;
+            }
+
+            const container = document.getElementById('stationsContainer');
+            container.innerHTML = '';
+
+            data.stations.forEach(station => {
+                const card = document.createElement('a');
+                card.href = `/station-view/${station.id}`;
+                card.className = 'station-card';
+
+                const currentTicketInfo = station.currentTicket
+                    ? `<span class="status-value">#${station.currentTicket.id} - ${station.currentTicket.name}</span>`
+                    : `<span class="status-value status-empty">Idle</span>`;
+
+                card.innerHTML = `
+                    <div class="station-card-header">
+                        <div class="station-name">${station.name}</div>
+                        <div class="station-id">#${station.id}</div>
+                    </div>
+                    <div class="station-status">
+                        <div class="status-label">Currently Serving:</div>
+                        ${currentTicketInfo}
+                    </div>
+                    <div class="queue-indicator">
+                        <strong>${data.queueRemaining}</strong> in queue
+                    </div>
+                `;
+
+                container.appendChild(card);
+            });
+
+            document.getElementById('queueRemaining').textContent = data.queueRemaining;
+        }
+
+        // Load all stations (fallback when WS is unavailable)
+        async function loadStations() {
+            try {
+                const response = await fetch('/station');
+                const data = await response.json();
+
+                if (data.success) {
+                    renderStations(data);
+                }
+            } catch (error) {
+                console.error('Failed to load stations:', error);
+            }
+        }
+
+        // Initialize on page load
+        window.addEventListener('load', () => {
+            loadStations();
+            initWebSocket();
+        });
+    </script>
+</body>
+</html>

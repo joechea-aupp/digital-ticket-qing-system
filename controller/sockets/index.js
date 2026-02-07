@@ -3,6 +3,23 @@ let ticketCounter = 1;
 let agents = []; // Array of agents/counters: {id, name, currentTicket, previousTicket}
 let agentCounter = 1;
 
+// Export state management functions for use by routes
+const stateManager = {
+    getAgents: () => agents,
+    getQueue: () => ticketQueue,
+    getTicketCounter: () => ticketCounter,
+    setTicketCounter: (val) => { ticketCounter = val; },
+    getAgentCounter: () => agentCounter,
+    setAgentCounter: (val) => { agentCounter = val; },
+    addTicket: (ticket) => { ticketQueue.push(ticket); },
+    getNextTicket: () => ticketQueue.shift(),
+    returnTicketToQueue: (ticket) => { ticketQueue.unshift(ticket); },
+    getAgent: (agentId) => agents.find(a => a.id === agentId),
+    findAgentIndex: (agentId) => agents.findIndex(a => a.id === agentId),
+    // Broadcast functions will be set by setupSockets
+    broadcastAll: null
+};
+
 const setupSockets = (wss, serverSessionId) => {
     const broadcastToDisplay = () => {
         // Broadcast to display clients (ticket-queue page)
@@ -13,6 +30,19 @@ const setupSockets = (wss, serverSessionId) => {
         wss.clients.forEach(client => {
             if (client.readyState === 1 && client.clientType === 'display') {
                 client.send(JSON.stringify(displayData));
+            }
+        });
+    };
+
+    const broadcastToStations = () => {
+        const stationsData = {
+            type: 'stations',
+            stations: agents,
+            queueRemaining: ticketQueue.length
+        };
+        wss.clients.forEach(client => {
+            if (client.readyState === 1 && client.clientType === 'stations') {
+                client.send(JSON.stringify(stationsData));
             }
         });
     };
@@ -59,7 +89,11 @@ const setupSockets = (wss, serverSessionId) => {
         broadcastToDisplay();
         broadcastToAdmin();
         broadcastToGetTicket();
+        broadcastToStations();
     };
+
+    // Set the broadcast function in stateManager so routes can use it
+    stateManager.broadcastAll = broadcastAll;
 
     // Display screen WebSocket (ticket-queue page)
     wss.on("show-ticket-queue", (ws, req) => {
@@ -69,6 +103,18 @@ const setupSockets = (wss, serverSessionId) => {
         // Send initial state
         ws.send(JSON.stringify({
             agents: agents,
+            queueRemaining: ticketQueue.length
+        }));
+    });
+
+    // Stations list WebSocket (stations page)
+    wss.on("stations", (ws, req) => {
+        console.log("New connection on /ws/stations");
+        ws.clientType = 'stations';
+
+        ws.send(JSON.stringify({
+            type: 'stations',
+            stations: agents,
             queueRemaining: ticketQueue.length
         }));
     });
@@ -230,3 +276,5 @@ const setupSockets = (wss, serverSessionId) => {
 }
 
 module.exports = setupSockets
+module.exports.stateManager = stateManager
+module.exports.getGlobalState = () => ({ agents, ticketQueue, ticketCounter, agentCounter })

@@ -51,6 +51,12 @@ server.on("upgrade", (request, socket, head) => {
                 wss.emit('admin', ws, request);
             });
             break;
+
+        case "/ws/stations":
+            wss.handleUpgrade(request, socket, head, (ws) => {
+                wss.emit('stations', ws, request);
+            });
+            break;
         
         default:
             socket.destroy();

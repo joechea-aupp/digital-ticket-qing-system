@@ -1,0 +1,456 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{title}}</title>
+    <style>
+        /***** Global Styles *****/
+        html, body {
+            height: 100%;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            max-width: none;
+            padding: 20px;
+            margin: 0;
+        }
+
+        .container {
+            background-color: white;
+            border-radius: 12px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+            max-width: 700px;
+            width: 100%;
+            padding: 40px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            color: #333;
+            text-align: center;
+            margin: 0 0 10px 0;
+            font-size: 2em;
+        }
+
+        .station-id {
+            text-align: center;
+            color: #999;
+            margin-bottom: 30px;
+            font-size: 0.95em;
+        }
+
+        /***** Status Section *****/
+        .status-section {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+
+        .status-label {
+            font-size: 0.9em;
+            opacity: 0.9;
+            margin-bottom: 10px;
+        }
+
+        .status-value {
+            font-size: 1.8em;
+            font-weight: bold;
+        }
+
+        /***** Current & Previous Ticket Sections *****/
+        .ticket-section {
+            margin-bottom: 25px;
+            padding: 20px;
+            background-color: #f9f9f9;
+            border-radius: 8px;
+            border-left: 4px solid #667eea;
+        }
+
+        .ticket-section.previous {
+            border-left-color: #999;
+            opacity: 0.8;
+        }
+
+        .ticket-section h2 {
+            margin: 0 0 15px 0;
+            color: #333;
+            font-size: 1.1em;
+        }
+
+        .ticket-info {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .ticket-number {
+            font-size: 2.5em;
+            font-weight: bold;
+            color: #667eea;
+            min-width: 80px;
+        }
+
+        .ticket-details {
+            flex: 1;
+        }
+
+        .ticket-name {
+            font-size: 1.1em;
+            color: #333;
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+
+        .ticket-time {
+            font-size: 0.9em;
+            color: #999;
+        }
+
+        .ticket-empty {
+            color: #999;
+            font-style: italic;
+            padding: 15px;
+            text-align: center;
+        }
+
+        /***** Queue Info *****/
+        .queue-info {
+            background-color: #e8f5e9;
+            border-left: 4px solid #4caf50;
+            padding: 15px 20px;
+            border-radius: 6px;
+            margin-bottom: 25px;
+            text-align: center;
+        }
+
+        .queue-info strong {
+            color: #2e7d32;
+            font-size: 1.2em;
+        }
+
+        /***** Action Buttons *****/
+        .actions {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            margin-top: 30px;
+            flex-wrap: wrap;
+        }
+
+        button {
+            padding: 12px 24px;
+            font-size: 1em;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+
+        .btn-next {
+            background-color: #4caf50;
+            color: white;
+        }
+
+        .btn-next:hover {
+            background-color: #45a049;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(76, 175, 80, 0.3);
+        }
+
+        .btn-clear {
+            background-color: #f44336;
+            color: white;
+        }
+
+        .btn-clear:hover {
+            background-color: #da190b;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(244, 67, 54, 0.3);
+        }
+
+        .btn-back {
+            background-color: #9e9e9e;
+            color: white;
+        }
+
+        .btn-back:hover {
+            background-color: #757575;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(158, 158, 158, 0.3);
+        }
+
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        button:disabled:hover {
+            transform: none;
+        }
+
+        /***** Message *****/
+        .message {
+            padding: 15px;
+            margin-bottom: 20px;
+            border-radius: 6px;
+            text-align: center;
+            font-weight: 600;
+        }
+
+        .message.success {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .message.error {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        /***** Responsive *****/
+        @media (max-width: 600px) {
+            .container {
+                padding: 20px;
+            }
+
+            h1 {
+                font-size: 1.5em;
+            }
+
+            .ticket-info {
+                flex-direction: column;
+                align-items: center;
+            }
+
+            .ticket-number {
+                font-size: 2em;
+            }
+
+            .actions {
+                flex-direction: column;
+            }
+
+            button {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>{{station.name}}</h1>
+        <div class="station-id">Station #{{station.id}}</div>
+
+        <div id="message"></div>
+
+        <div class="queue-info">
+            <strong id="queueCount">0</strong> tickets remaining in queue
+        </div>
+
+        <!-- Current Ticket Section -->
+        <div class="ticket-section">
+            <h2>Currently Serving:</h2>
+            {{#if station.currentTicket}}
+                <div class="ticket-info">
+                    <div class="ticket-number">{{station.currentTicket.id}}</div>
+                    <div class="ticket-details">
+                        <div class="ticket-name">{{station.currentTicket.name}}</div>
+                        <div class="ticket-time" id="currentTime">{{station.currentTicket.time}}</div>
+                    </div>
+                </div>
+            {{else}}
+                <div class="ticket-empty">No customer being served</div>
+            {{/if}}
+        </div>
+
+        <!-- Previous Ticket Section -->
+        <div class="ticket-section previous">
+            <h2>Last Served:</h2>
+            {{#if station.previousTicket}}
+                <div class="ticket-info">
+                    <div class="ticket-number">{{station.previousTicket.id}}</div>
+                    <div class="ticket-details">
+                        <div class="ticket-name">{{station.previousTicket.name}}</div>
+                        <div class="ticket-time" id="previousTime">{{station.previousTicket.time}}</div>
+                    </div>
+                </div>
+            {{else}}
+                <div class="ticket-empty">No previous customer</div>
+            {{/if}}
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="actions">
+            <button class="btn-next" onclick="nextTicket()">Next Ticket</button>
+            <button class="btn-clear" onclick="clearCurrent()">Clear Current</button>
+            <button class="btn-back" onclick="location.href='/'">Back to Home</button>
+        </div>
+    </div>
+
+    <script>
+        const stationId = {{stationId}};
+        let socket;
+
+        // Initialize WebSocket
+        function initWebSocket() {
+            const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+            socket = new WebSocket(protocol + '//' + window.location.host);
+
+            socket.onopen = () => {
+                console.log('WebSocket connected');
+                refreshStation();
+            };
+
+            socket.onmessage = (event) => {
+                const data = JSON.parse(event.data);
+                if (data.type === 'state' || data.type === 'update') {
+                    refreshStation();
+                }
+            };
+
+            socket.onerror = (error) => {
+                console.error('WebSocket error:', error);
+            };
+
+            socket.onclose = () => {
+                console.log('WebSocket disconnected, reconnecting in 3 seconds...');
+                setTimeout(initWebSocket, 3000);
+            };
+        }
+
+        // Refresh station data
+        async function refreshStation() {
+            try {
+                const response = await fetch(`/station/${stationId}`);
+                const data = await response.json();
+
+                if (data.success) {
+                    const station = data.station;
+
+                    // Update current ticket
+                    const currentSection = document.querySelector('.ticket-section:not(.previous)');
+                    if (station.currentTicket) {
+                        currentSection.innerHTML = `
+                            <h2>Currently Serving:</h2>
+                            <div class="ticket-info">
+                                <div class="ticket-number">${station.currentTicket.id}</div>
+                                <div class="ticket-details">
+                                    <div class="ticket-name">${station.currentTicket.name}</div>
+                                    <div class="ticket-time">${new Date(station.currentTicket.time).toLocaleTimeString()}</div>
+                                </div>
+                            </div>
+                        `;
+                    } else {
+                        currentSection.innerHTML = `
+                            <h2>Currently Serving:</h2>
+                            <div class="ticket-empty">No customer being served</div>
+                        `;
+                    }
+
+                    // Update previous ticket
+                    const previousSection = document.querySelector('.ticket-section.previous');
+                    if (station.previousTicket) {
+                        previousSection.innerHTML = `
+                            <h2>Last Served:</h2>
+                            <div class="ticket-info">
+                                <div class="ticket-number">${station.previousTicket.id}</div>
+                                <div class="ticket-details">
+                                    <div class="ticket-name">${station.previousTicket.name}</div>
+                                    <div class="ticket-time">${new Date(station.previousTicket.time).toLocaleTimeString()}</div>
+                                </div>
+                            </div>
+                        `;
+                    } else {
+                        previousSection.innerHTML = `
+                            <h2>Last Served:</h2>
+                            <div class="ticket-empty">No previous customer</div>
+                        `;
+                    }
+
+                    // Update queue count
+                    document.getElementById('queueCount').textContent = data.queueRemaining;
+                }
+            } catch (error) {
+                console.error('Failed to refresh station:', error);
+            }
+        }
+
+        // Next ticket
+        async function nextTicket() {
+            try {
+                const response = await fetch(`/station/${stationId}/next-ticket`, {
+                    method: 'POST'
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    showMessage('Advanced to next ticket', 'success');
+                    refreshStation();
+                } else {
+                    showMessage(data.error || 'Failed to advance to next ticket', 'error');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                showMessage('Error: ' + error.message, 'error');
+            }
+        }
+
+        // Clear current ticket
+        async function clearCurrent() {
+            try {
+                const response = await fetch(`/station/${stationId}/clear-current`, {
+                    method: 'POST'
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    showMessage('Current ticket cleared', 'success');
+                    refreshStation();
+                } else {
+                    showMessage(data.error || 'Failed to clear current ticket', 'error');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                showMessage('Error: ' + error.message, 'error');
+            }
+        }
+
+        // Show message
+        function showMessage(text, type) {
+            const messageDiv = document.getElementById('message');
+            messageDiv.textContent = text;
+            messageDiv.className = `message ${type}`;
+
+            setTimeout(() => {
+                messageDiv.className = '';
+                messageDiv.textContent = '';
+            }, 4000);
+        }
+
+        // Initialize on page load
+        window.addEventListener('load', () => {
+            initWebSocket();
+        });
+
+        // Refresh every 5 seconds as a fallback
+        setInterval(refreshStation, 5000);
+    </script>
+</body>
+</html>
