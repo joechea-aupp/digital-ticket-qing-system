@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Get Your Ticket</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        
+        .container {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+            max-width: 500px;
+            width: 100%;
+            padding: 40px;
+        }
+        
+        h1 {
+            color: #333;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+        
+        .form-group {
+            margin-bottom: 25px;
+        }
+        
+        label {
+            display: block;
+            color: #555;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+        
+        input[type="text"] {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #ddd;
+            border-radius: 6px;
+            font-size: 1em;
+            transition: border-color 0.3s;
+        }
+        
+        input[type="text"]:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        
+        button {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 1.1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+        
+        button:hover {
+            transform: translateY(-2px);
+        }
+        
+        button:active {
+            transform: translateY(0);
+        }
+        
+        button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .status {
+            text-align: center;
+            margin-bottom: 20px;
+            padding: 10px;
+            background-color: #f0f0f0;
+            border-radius: 6px;
+            font-size: 0.9em;
+        }
+        
+        .status-indicator {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            margin-right: 6px;
+            animation: pulse 2s infinite;
+        }
+        
+        .status-indicator.connected {
+            background-color: #4CAF50;
+        }
+        
+        .status-indicator.disconnected {
+            background-color: #f44336;
+            animation: none;
+        }
+        
+        @keyframes pulse {
+            0%, 100% {
+                opacity: 1;
+            }
+            50% {
+                opacity: 0.5;
+            }
+        }
+        
+        .result {
+            display: none;
+            text-align: center;
+            padding: 30px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 8px;
+            color: white;
+            margin-top: 20px;
+        }
+        
+        .result.show {
+            display: block;
+        }
+        
+        .result h2 {
+            margin-bottom: 20px;
+            font-size: 1.5em;
+        }
+        
+        .ticket-number {
+            font-size: 5em;
+            font-weight: bold;
+            margin: 20px 0;
+            text-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+        
+        .position-info {
+            font-size: 1.1em;
+            opacity: 0.9;
+            margin-top: 15px;
+        }
+        
+        .new-ticket-btn {
+            margin-top: 20px;
+            background: white;
+            color: #667eea;
+        }
+        
+        .alert {
+            padding: 12px;
+            margin-bottom: 20px;
+            border-radius: 6px;
+            display: none;
+        }
+        
+        .alert.show {
+            display: block;
+        }
+        
+        .alert.error {
+            background-color: #ffebee;
+            color: #c62828;
+            border: 1px solid #ef5350;
+        }
+        
+        .current-serving {
+            background: #f8f9fa;
+            border-left: 4px solid #667eea;
+            padding: 15px;
+            margin-bottom: 20px;
+            border-radius: 6px;
+        }
+        
+        .current-serving h3 {
+            color: #555;
+            font-size: 0.9em;
+            margin-bottom: 8px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        
+        .current-serving-number {
+            font-size: 2.5em;
+            font-weight: bold;
+            color: #667eea;
+        }
+        
+        .current-serving-none {
+            font-size: 1.2em;
+            color: #999;
+            font-style: italic;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Get Your Ticket</h1>
+        
+        <div class="status">
+            <span class="status-indicator disconnected" id="statusIndicator"></span>
+            <span id="statusText">Connecting...</span>
+        </div>
+        
+        <div class="current-serving">
+            <h3>Currently Serving</h3>
+            <div class="current-serving-number" id="currentServingDisplay">-</div>
+        </div>
+        
+        <div class="alert error" id="errorAlert"></div>
+        
+        <div id="formContainer">
+            <div class="form-group">
+                <label for="userName">Your Name</label>
+                <input 
+                    type="text" 
+                    id="userName" 
+                    placeholder="Enter your name" 
+                    required
+                    autocomplete="name"
+                >
+            </div>
+            
+            <button id="getTicketBtn" onclick="getTicket()" disabled>
+                Get Ticket
+            </button>
+        </div>
+        
+        <div class="result" id="resultContainer">
+            <h2>Your Ticket</h2>
+            <div class="ticket-number" id="ticketNumber">-</div>
+            <div class="position-info">
+                <p id="positionText"></p>
+            </div>
+            <button class="new-ticket-btn" onclick="resetForm()">Get Another Ticket</button>
+        </div>
+    </div>
+
+    <script>
+        let ws = null;
+        const STORAGE_KEY = 'ticketData';
+        
+        function connectWebSocket() {
+            const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+            ws = new WebSocket(`${protocol}//${window.location.host}/ws/get-ticket`);
+            
+            ws.onopen = () => {
+                console.log('WebSocket connected');
+                updateStatus(true);
+                document.getElementById('getTicketBtn').disabled = false;
+            };
+            
+            ws.onmessage = (event) => {
+                try {
+                    const data = JSON.parse(event.data);
+                    
+                    // Handle current serving updates
+                    if (data.type === 'currentServing') {
+                        updateCurrentServing(data.currentTicket);
+                    }
+                    // Handle ticket assignment
+                    else if (data.success && data.ticket) {
+                        showTicket(data.ticket, data.position);
+                        saveTicketToStorage(data.ticket, data.position);
+                    } else if (data.error) {
+                        showError(data.error);
+                    }
+                } catch (e) {
+                    console.error('Error parsing message:', e);
+                    showError('Error receiving response');
+                }
+            };
+            
+            ws.onerror = (error) => {
+                console.error('WebSocket error:', error);
+                updateStatus(false);
+            };
+            
+            ws.onclose = () => {
+                console.log('WebSocket disconnected');
+                updateStatus(false);
+                document.getElementById('getTicketBtn').disabled = true;
+                setTimeout(connectWebSocket, 3000);
+            };
+        }
+        
+        function updateStatus(connected) {
+            const indicator = document.getElementById('statusIndicator');
+            const text = document.getElementById('statusText');
+            
+            if (connected) {
+                indicator.classList.remove('disconnected');
+                indicator.classList.add('connected');
+                text.textContent = 'Connected';
+            } else {
+                indicator.classList.remove('connected');
+                indicator.classList.add('disconnected');
+                text.textContent = 'Disconnected';
+            }
+        }
+        
+        function updateCurrentServing(currentTicket) {
+            const display = document.getElementById('currentServingDisplay');
+            if (currentTicket && currentTicket.id) {
+                display.textContent = currentTicket.id;
+                display.className = 'current-serving-number';
+            } else {
+                display.textContent = 'None';
+                display.className = 'current-serving-none';
+            }
+        }
+        
+        function saveTicketToStorage(ticket, position) {
+            const ticketData = {
+                ticket: ticket,
+                position: position,
+                timestamp: new Date().getTime()
+            };
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(ticketData));
+        }
+        
+        function loadTicketFromStorage() {
+            try {
+                const stored = localStorage.getItem(STORAGE_KEY);
+                if (stored) {
+                    const ticketData = JSON.parse(stored);
+                    // Show stored ticket
+                    showTicket(ticketData.ticket, ticketData.position);
+                }
+            } catch (e) {
+                console.error('Error loading ticket from storage:', e);
+            }
+        }
+        
+        function clearTicketFromStorage() {
+            localStorage.removeItem(STORAGE_KEY);
+        }
+        
+        function getTicket() {
+            const nameInput = document.getElementById('userName');
+            const name = nameInput.value.trim();
+            
+            if (!name) {
+                showError('Please enter your name');
+                nameInput.focus();
+                return;
+            }
+            
+            if (!ws || ws.readyState !== WebSocket.OPEN) {
+                showError('Not connected to server');
+                return;
+            }
+            
+            ws.send(JSON.stringify({
+                action: 'getTicket',
+                name: name
+            }));
+        }
+        
+        function showTicket(ticket, position) {
+            document.getElementById('ticketNumber').textContent = ticket.id;
+            document.getElementById('positionText').textContent = 
+                `Position in queue: ${position}`;
+            
+            document.getElementById('formContainer').style.display = 'none';
+            document.getElementById('resultContainer').classList.add('show');
+        }
+        
+        function resetForm() {
+            document.getElementById('userName').value = '';
+            document.getElementById('formContainer').style.display = 'block';
+            document.getElementById('resultContainer').classList.remove('show');
+            document.getElementById('errorAlert').classList.remove('show');
+            clearTicketFromStorage();
+        }
+        
+        function showError(message) {
+            const alert = document.getElementById('errorAlert');
+            alert.textContent = message;
+            alert.classList.add('show');
+            setTimeout(() => alert.classList.remove('show'), 3000);
+        }
+        
+        // Allow Enter key to submit
+        document.getElementById('userName').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                getTicket();
+            }
+        });
+        
+        // Connect when page loads
+        window.addEventListener('load', () => {
+            loadTicketFromStorage();
+            connectWebSocket();
+        });
+        
+        // Cleanup on page unload
+        window.addEventListener('beforeunload', () => {
+            if (ws) ws.close();
+        });
+    </script>
+</body>
+</html>
