@@ -376,6 +376,212 @@
         .btn-add:hover {
             background-color: #5568d3;
         }
+
+        /* Modal styles */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0, 0, 0, 0.5);
+        }
+
+        .modal.show {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-content {
+            background-color: white;
+            padding: 30px;
+            border-radius: 12px;
+            max-width: 500px;
+            width: 90%;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+            position: relative;
+        }
+
+        .modal-header {
+            margin-bottom: 20px;
+        }
+
+        .modal-header h2 {
+            margin: 0;
+            color: #333;
+        }
+
+        .modal-close {
+            position: absolute;
+            top: 15px;
+            right: 20px;
+            font-size: 28px;
+            font-weight: bold;
+            color: #666;
+            cursor: pointer;
+            background: none;
+            border: none;
+            padding: 0;
+            line-height: 1;
+        }
+
+        .modal-close:hover {
+            color: #333;
+        }
+
+        .modal-body {
+            margin-bottom: 20px;
+        }
+
+        .modal-body .form-group {
+            margin-bottom: 15px;
+        }
+
+        .modal-footer {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+        }
+
+        .btn-cancel {
+            background-color: #ddd;
+            color: #333;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 1em;
+        }
+
+        .btn-cancel:hover {
+            background-color: #ccc;
+        }
+
+        .btn-open-modal {
+            background-color: #667eea;
+            color: white;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 1em;
+            font-weight: 600;
+            margin-bottom: 20px;
+        }
+
+        .btn-open-modal:hover {
+            background-color: #5568d3;
+        }
+
+        /* Table styles */
+        .agents-table-container {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .agents-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .agents-table thead {
+            background-color: #667eea;
+            color: white;
+        }
+
+        .agents-table th,
+        .agents-table td {
+            padding: 12px 15px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+
+        .agents-table th {
+            font-weight: 600;
+            text-transform: uppercase;
+            font-size: 0.9em;
+        }
+
+        .agents-table tbody tr:hover {
+            background-color: #f5f5f5;
+        }
+
+        .agents-table tbody tr:last-child td {
+            border-bottom: none;
+        }
+
+        .table-actions {
+            display: flex;
+            gap: 5px;
+        }
+
+        .table-actions button {
+            padding: 6px 12px;
+            font-size: 0.85em;
+            border-radius: 4px;
+            border: none;
+            cursor: pointer;
+            white-space: nowrap;
+        }
+
+        .btn-table-next {
+            background-color: #4caf50;
+            color: white;
+        }
+
+        .btn-table-next:hover {
+            background-color: #45a049;
+        }
+
+        .btn-table-next:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+        }
+
+        .btn-table-clear {
+            background-color: #ff9800;
+            color: white;
+        }
+
+        .btn-table-clear:hover {
+            background-color: #e68900;
+        }
+
+        .btn-table-clear:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+        }
+
+        .btn-table-remove {
+            background-color: #f44336;
+            color: white;
+        }
+
+        .btn-table-remove:hover {
+            background-color: #d32f2f;
+        }
+
+        .ticket-badge {
+            display: inline-block;
+            padding: 4px 8px;
+            background-color: #667eea;
+            color: white;
+            border-radius: 4px;
+            font-weight: bold;
+            font-size: 0.95em;
+        }
+
+        .no-ticket {
+            color: #999;
+            font-style: italic;
+        }
         
     </style>
 </head>
@@ -389,24 +595,17 @@
     </div>
 
     <div class="container">
-        <div class="add-agent-section">
-            <h2>Add Agent/Counter</h2>
-            <div class="add-agent-form">
-                <div class="form-group">
-                    <label for="agentName">Counter Name</label>
-                    <input type="text" id="agentName" placeholder="e.g., Counter 1, Window A" />
-                </div>
-                <button class="btn-add" onclick="addAgent()">Add Counter</button>
-            </div>
-        </div>
-        
         <div class="alert error" id="errorAlert"></div>
         <div class="alert success" id="successAlert"></div>
         
-        <h2 style="color: white; margin-bottom: 15px;">Active Counters</h2>
-        <div class="agents-grid" id="agentsGrid">
-            <div class="empty-queue" style="grid-column: 1/-1; background: white; padding: 30px; border-radius: 12px;">
-                No agents added yet. Add a counter above to get started.
+        <button class="btn-open-modal" onclick="openModal()">+ Add Agent/Counter</button>
+        
+        <div class="agents-table-container">
+            <h2 style="margin-bottom: 15px;">Active Counters</h2>
+            <div id="agentsTableContainer">
+                <div class="empty-queue" style="padding: 30px; text-align: center;">
+                    No agents added yet. Click "Add Agent/Counter" button to get started.
+                </div>
             </div>
         </div>
         
@@ -420,6 +619,26 @@
             </div>
             <div class="queue-list" id="queueList">
                 <div class="empty-queue">Waiting for connection...</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal for adding agent -->
+    <div id="addAgentModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Add Agent/Counter</h2>
+                <button class="modal-close" onclick="closeModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label for="agentName">Counter Name</label>
+                    <input type="text" id="agentName" placeholder="e.g., Counter 1, Window A" />
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-cancel" onclick="closeModal()">Cancel</button>
+                <button class="btn-add" onclick="addAgent()">Add Counter</button>
             </div>
         </div>
     </div>
@@ -488,36 +707,51 @@
             // Update queue remaining
             document.getElementById('queueRemaining').textContent = queue.length;
             
-            // Update agents grid
-            const agentsGridEl = document.getElementById('agentsGrid');
+            // Update agents table
+            const agentsTableEl = document.getElementById('agentsTableContainer');
             if (agents.length === 0) {
-                agentsGridEl.innerHTML = '<div class="empty-queue" style="grid-column: 1/-1; background: white; padding: 30px; border-radius: 12px;">No agents added yet. Add a counter above to get started.</div>';
+                agentsTableEl.innerHTML = '<div class="empty-queue" style="padding: 30px; text-align: center;">No agents added yet. Click "Add Agent/Counter" button to get started.</div>';
             } else {
-                agentsGridEl.innerHTML = agents.map(agent => `
-                    <div class="agent-card">
-                        <div class="agent-header">
-                            <div class="agent-name">${agent.name}</div>
-                            <button class="btn-remove-agent" onclick="removeAgent(${agent.id})">Remove</button>
-                        </div>
-                        <div class="agent-ticket-info">
-                            <div class="agent-ticket-label">Currently Serving</div>
-                            ${agent.currentTicket ? `
-                                <div class="agent-ticket-number">#${agent.currentTicket.id}</div>
-                                <div class="agent-ticket-name">${agent.currentTicket.name}</div>
-                            ` : `
-                                <div class="agent-ticket-number empty">No Ticket</div>
-                            `}
-                        </div>
-                        <div class="agent-buttons">
-                            <button class="btn-next" onclick="nextTicket(${agent.id})" ${queue.length === 0 ? 'disabled' : ''}>
-                                Next Ticket
-                            </button>
-                            <button class="btn-clear" onclick="clearCurrent(${agent.id})" ${!agent.currentTicket ? 'disabled' : ''}>
-                                Clear Current
-                            </button>
-                        </div>
-                    </div>
-                `).join('');
+                agentsTableEl.innerHTML = `
+                    <table class="agents-table">
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Serving</th>
+                                <th>Customer</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${agents.map(agent => `
+                                <tr>
+                                    <td><strong>${agent.name}</strong></td>
+                                    <td>
+                                        ${agent.currentTicket ? `
+                                            <span class="ticket-badge">#${agent.currentTicket.id}</span>
+                                        ` : `
+                                            <span class="no-ticket">No ticket</span>
+                                        `}
+                                    </td>
+                                    <td>${agent.currentTicket ? agent.currentTicket.name : '-'}</td>
+                                    <td>
+                                        <div class="table-actions">
+                                            <button class="btn-table-next" onclick="nextTicket(${agent.id})" ${queue.length === 0 ? 'disabled' : ''}>
+                                                Next
+                                            </button>
+                                            <button class="btn-table-clear" onclick="clearCurrent(${agent.id})" ${!agent.currentTicket ? 'disabled' : ''}>
+                                                Clear
+                                            </button>
+                                            <button class="btn-table-remove" onclick="removeAgent(${agent.id})">
+                                                Remove
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                `;
             }
             
             // Update queue list
@@ -537,6 +771,16 @@
             }
         }
         
+        function openModal() {
+            document.getElementById('addAgentModal').classList.add('show');
+            document.getElementById('agentName').focus();
+        }
+
+        function closeModal() {
+            document.getElementById('addAgentModal').classList.remove('show');
+            document.getElementById('agentName').value = '';
+        }
+
         function addAgent() {
             const agentNameInput = document.getElementById('agentName');
             const agentName = agentNameInput.value.trim();
@@ -557,6 +801,7 @@
             }));
             
             agentNameInput.value = '';
+            closeModal();
         }
         
         function removeAgent(agentId) {
@@ -621,6 +866,20 @@
             document.getElementById('agentName').addEventListener('keypress', (e) => {
                 if (e.key === 'Enter') {
                     addAgent();
+                }
+            });
+            
+            // Close modal on escape key
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape') {
+                    closeModal();
+                }
+            });
+            
+            // Close modal when clicking outside
+            document.getElementById('addAgentModal').addEventListener('click', (e) => {
+                if (e.target.id === 'addAgentModal') {
+                    closeModal();
                 }
             });
         });
