@@ -19,8 +19,18 @@ const setupSockets = (wss, serverSessionId) => {
 
     const broadcastToGetTicket = () => {
         // Broadcast current serving tickets to get-ticket clients
+        // Get the most recent ticket being served from any agent
+        let currentTicket = null;
+        for (const agent of agents) {
+            if (agent.currentTicket) {
+                currentTicket = agent.currentTicket;
+                break; // Take the first agent's current ticket
+            }
+        }
+        
         const getTicketData = {
             type: 'currentServing',
+            currentTicket: currentTicket,
             agents: agents,
             queueRemaining: ticketQueue.length
         };
@@ -69,8 +79,18 @@ const setupSockets = (wss, serverSessionId) => {
         ws.clientType = 'get-ticket';
         
         // Send initial current serving state with server session ID
+        // Get the most recent ticket being served from any agent
+        let currentTicket = null;
+        for (const agent of agents) {
+            if (agent.currentTicket) {
+                currentTicket = agent.currentTicket;
+                break; // Take the first agent's current ticket
+            }
+        }
+        
         ws.send(JSON.stringify({
             type: 'currentServing',
+            currentTicket: currentTicket,
             agents: agents,
             queueRemaining: ticketQueue.length,
             serverSessionId: serverSessionId

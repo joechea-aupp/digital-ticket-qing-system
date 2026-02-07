@@ -185,15 +185,20 @@
             border: 1px solid #ff9800;
         }
         
-        .current-serving {
+        .tickets-remaining {
             background: #f8f9fa;
             border-left: 4px solid #667eea;
             padding: 15px;
             margin-bottom: 20px;
             border-radius: 6px;
+            display: none;
         }
         
-        .current-serving h3 {
+        .tickets-remaining.show {
+            display: block;
+        }
+        
+        .tickets-remaining h3 {
             color: #555;
             font-size: 0.9em;
             margin-bottom: 8px;
@@ -201,16 +206,16 @@
             letter-spacing: 1px;
         }
         
-        .current-serving-number {
+        .tickets-remaining-number {
             font-size: 2.5em;
             font-weight: bold;
             color: #667eea;
         }
         
-        .current-serving-none {
-            font-size: 1.2em;
-            color: #999;
-            font-style: italic;
+        .tickets-remaining-text {
+            font-size: 0.9em;
+            color: #666;
+            margin-top: 5px;
         }
     </style>
 </head>
@@ -223,9 +228,10 @@
             <span id="statusText">Connecting...</span>
         </div>
         
-        <div class="current-serving">
-            <h3>Currently Serving</h3>
-            <div class="current-serving-number" id="currentServingDisplay">-</div>
+        <div class="tickets-remaining" id="ticketsRemainingContainer">
+            <h3>Tickets Until Your Turn</h3>
+            <div class="tickets-remaining-number" id="ticketsRemainingDisplay">0</div>
+            <div class="tickets-remaining-text" id="ticketsRemainingText"></div>
         </div>
         
         <div class="alert error" id="errorAlert"></div>
@@ -262,6 +268,9 @@
         let ws = null;
         const STORAGE_KEY = 'ticketData';
         let currentServerSessionId = null;
+        let myTicket = null;
+        let currentServingTicketId = null;
+        let agents = [];
         
         function connectWebSocket() {
             const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
@@ -284,7 +293,16 @@
                     
                     // Handle current serving updates
                     if (data.type === 'currentServing') {
-                        updateCurrentServing(data.currentTicket);
+                        if (data.currentTicket && data.currentTicket.id) {
+                            currentServingTicketId = data.currentTicket.id;
+                        } else {
+                            currentServingTicketId = null;
+                        }
+                        // Store agents info for availability check
+                        if (data.agents) {
+                            agents = data.agents;
+                        }
+                        updateTicketsRemaining();
                         // Validate stored ticket against server session ID
                         if (currentServerSessionId) {
                             validateStoredTicket(currentServerSessionId);
@@ -331,14 +349,46 @@
             }
         }
         
-        function updateCurrentServing(currentTicket) {
-            const display = document.getElementById('currentServingDisplay');
-            if (currentTicket && currentTicket.id) {
-                display.textContent = currentTicket.id;
-                display.className = 'current-serving-number';
+        function updateTicketsRemaining() {
+            const container = document.getElementById('ticketsRemainingContainer');
+            const display = document.getElementById('ticketsRemainingDisplay');
+            const text = document.getElementById('ticketsRemainingText');
+            
+            if (!myTicket || !myTicket.id) {
+                container.classList.remove('show');
+                return;
+            }
+            
+            // Check if any agents are available
+            const hasAvailableAgents = agents && agents.length > 0;
+            
+            if (!hasAvailableAgents) {
+                // No agents available
+                display.textContent = '';
+                text.textContent = 'No agent available. Thank you for patiently waiting.';
+                container.classList.add('show');
+                return;
+            }
+            
+            if (currentServingTicketId === null || currentServingTicketId === undefined) {
+                // No one is being served yet, but agents are available
+                display.textContent = '';
+                text.textContent = 'Waiting for agent to call next ticket.';
+                container.classList.add('show');
+                return;
+            }
+            
+            const ticketsRemaining = myTicket.id - currentServingTicketId;
+            
+            if (ticketsRemaining <= 0) {
+                // Your turn or already passed
+                display.textContent = '0';
+                text.textContent = "It's your turn!";
+                container.classList.add('show');
             } else {
-                display.textContent = 'None';
-                display.className = 'current-serving-none';
+                display.textContent = ticketsRemaining;
+                text.textContent = ticketsRemaining === 1 ? 'ticket ahead of you' : 'tickets ahead of you';
+                container.classList.add('show');
             }
         }
         
@@ -410,19 +460,21 @@
         }
         
         function showTicket(ticket, position) {
+            myTicket = ticket;
             document.getElementById('ticketNumber').textContent = ticket.id;
-            document.getElementById('positionText').textContent = 
-                `Position in queue: ${position}`;
             
             document.getElementById('formContainer').style.display = 'none';
             document.getElementById('resultContainer').classList.add('show');
+            updateTicketsRemaining();
         }
         
         function resetForm() {
+            myTicket = null;
             document.getElementById('userName').value = '';
             document.getElementById('formContainer').style.display = 'block';
             document.getElementById('resultContainer').classList.remove('show');
             document.getElementById('errorAlert').classList.remove('show');
+            document.getElementById('ticketsRemainingContainer').classList.remove('show');
             clearTicketFromStorage();
         }
         
@@ -439,9 +491,11 @@
             alert.classList.add('show');
             
             // Reset form to allow getting a new ticket
+            myTicket = null;
             document.getElementById('userName').value = '';
             document.getElementById('formContainer').style.display = 'block';
             document.getElementById('resultContainer').classList.remove('show');
+            document.getElementById('ticketsRemainingContainer').classList.remove('show');
             
             // Keep the message visible for 10 seconds
             setTimeout(() => alert.classList.remove('show'), 10000);
