@@ -1,6 +1,6 @@
 let ticketQueue = [];
 let ticketCounter = 1;
-let agents = []; // Array of agents/counters: {id, name, currentTicket, previousTicket}
+let agents = []; // Array of agents/counters: {id, name, currentTicket, previousTicket, isPaused}
 let agentCounter = 1;
 
 // Export state management functions for use by routes
@@ -238,7 +238,8 @@ const setupSockets = (wss, serverSessionId) => {
                         id: agentCounter++,
                         name: data.agentName || `Counter ${agentCounter - 1}`,
                         currentTicket: null,
-                        previousTicket: null
+                        previousTicket: null,
+                        isPaused: false
                     };
                     agents.push(newAgent);
                     broadcastAll();
@@ -282,6 +283,7 @@ const setupSockets = (wss, serverSessionId) => {
                     }
                     
                     if (ticketQueue.length > 0) {
+                        agent.isPaused = false;
                         agent.previousTicket = agent.currentTicket;
                         agent.currentTicket = ticketQueue.shift();
                         broadcastAll();
@@ -312,6 +314,24 @@ const setupSockets = (wss, serverSessionId) => {
                     agent.previousTicket = agent.currentTicket;
                     agent.currentTicket = null;
                     broadcastAll();
+                } else if (data.action === 'togglePause') {
+                    const agentId = data.agentId;
+                    const agent = agents.find(a => a.id === agentId);
+
+                    if (!agent) {
+                        ws.send(JSON.stringify({
+                            success: false,
+                            error: 'Agent not found'
+                        }));
+                        return;
+                    }
+
+                    agent.isPaused = Boolean(data.isPaused);
+                    broadcastAll();
+                    ws.send(JSON.stringify({
+                        success: true,
+                        message: agent.isPaused ? 'Counter paused' : 'Counter resumed'
+                    }));
                 }
             } catch (e) {
                 console.error('Error processing admin message:', e);

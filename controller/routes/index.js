@@ -99,6 +99,7 @@ router.post("/station/:id/next-ticket", requireAuth, (req, res) => {
         });
     }
     
+    agent.isPaused = false;
     agent.previousTicket = agent.currentTicket;
     agent.currentTicket = state.ticketQueue.shift();
     

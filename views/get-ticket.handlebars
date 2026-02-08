@@ -175,13 +175,13 @@
                 return;
             }
 
-            const hasAvailableAgents = agents && agents.length > 0;
+            const hasAvailableAgents = Array.isArray(agents) && agents.some(agent => !agent.isPaused);
 
             if (!hasAvailableAgents) {
                 setTicketsRemainingDisplay({
                     value: '',
                     className: 'mt-2 text-2xl font-semibold text-slate-500',
-                    text: 'No agent available. Thank you for patiently waiting.'
+                    text: 'Counters are on break. Thank you for patiently waiting.'
                 });
                 setTicketCardExpired(false);
                 setTicketCardYourTurn(false);
