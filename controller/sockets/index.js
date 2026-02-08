@@ -14,13 +14,14 @@ const stateManager = {
     addTicket: (ticket) => { ticketQueue.push(ticket); },
     getNextTicket: () => ticketQueue.shift(),
     returnTicketToQueue: (ticket) => { ticketQueue.unshift(ticket); },
+    clearQueue: () => { ticketQueue = []; },
     getAgent: (agentId) => agents.find(a => a.id === agentId),
     findAgentIndex: (agentId) => agents.findIndex(a => a.id === agentId),
     // Broadcast functions will be set by setupSockets
     broadcastAll: null
 };
 
-const setupSockets = (wss, serverSessionId) => {
+const setupSockets = (wss, serverState) => {
     const broadcastToDisplay = () => {
         // Broadcast to display clients (ticket-queue page)
         const displayData = {
@@ -180,7 +181,7 @@ const setupSockets = (wss, serverSessionId) => {
             servedTicketIds: servedTicketIds,
             lastServedTicketId: lastServedTicketId,
             queueRemaining: ticketQueue.length,
-            serverSessionId: serverSessionId
+            serverSessionId: serverState.sessionId
         }));
 
         ws.on("message", (message) => {
@@ -202,7 +203,7 @@ const setupSockets = (wss, serverSessionId) => {
                         success: true,
                         ticket: newTicket,
                         position: ticketQueue.length,
-                        serverSessionId: serverSessionId
+                        serverSessionId: serverState.sessionId
                     }));
                     
                     // Broadcast updated queue
@@ -339,6 +340,26 @@ const setupSockets = (wss, serverSessionId) => {
             }
         });
     });
+
+    // Function to broadcast server session reset to all get-ticket clients
+    const broadcastServerSessionReset = (newSessionId) => {
+        const resetData = {
+            type: 'serverSessionReset',
+            serverSessionId: newSessionId,
+            message: 'Server session has been reset. All tickets have been invalidated.'
+        };
+        wss.clients.forEach(client => {
+            if (client.readyState === 1 && client.clientType === 'get-ticket') {
+                client.send(JSON.stringify(resetData));
+            }
+        });
+    };
+
+    return {
+        broadcastAll,
+        broadcastServerSessionReset,
+        stateManager
+    };
 }
 
 module.exports = setupSockets

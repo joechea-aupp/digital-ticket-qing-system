@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const userModule = require('../db/user');
 const { requireAuth, requireAdmin } = require('../middleware/auth');
+const { v4: uuidv4 } = require('uuid');
 
 // Login GET
 router.get('/login', (req, res) => {
@@ -183,6 +184,47 @@ router.post('/api/change-password', requireAuth, async (req, res) => {
     } catch (error) {
         console.error('Error changing password:', error);
         res.status(500).json({ error: 'Failed to change password' });
+    }
+});
+
+// Force expire all tickets by resetting server UUID (admin only)
+router.post('/api/force-expire-tickets', requireAdmin, async (req, res) => {
+    try {
+        // Get server state and socket methods from server module
+        const serverModule = require('../server');
+        const socketsModule = require('./sockets');
+        const { serverState, socketMethods } = serverModule;
+        const { stateManager } = socketsModule;
+        
+        if (!serverState || !socketMethods || !stateManager) {
+            return res.status(500).json({ error: 'Server state not available' });
+        }
+
+        // Generate new server session ID
+        const oldSessionId = serverState.sessionId;
+        serverState.sessionId = uuidv4();
+        
+        console.log(`Server Session ID reset: ${oldSessionId} -> ${serverState.sessionId}`);
+        
+        // Clear the queue
+        stateManager.clearQueue();
+        
+        // Broadcast the reset to all get-ticket clients
+        socketMethods.broadcastServerSessionReset(serverState.sessionId);
+        
+        // Broadcast the cleared queue to all clients
+        if (stateManager.broadcastAll) {
+            stateManager.broadcastAll();
+        }
+        
+        res.json({ 
+            success: true,
+            message: 'All tickets have been force expired and queue cleared',
+            newSessionId: serverState.sessionId
+        });
+    } catch (error) {
+        console.error('Error force expiring tickets:', error);
+        res.status(500).json({ error: 'Failed to force expire tickets' });
     }
 });
 

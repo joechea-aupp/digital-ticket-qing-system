@@ -14,9 +14,15 @@ const app = express()
 const server = createServer(app)
 const wss = new WebSocket.Server({ noServer: true })
 
-// Generate unique session UUID for this server instance
-const serverSessionId = uuidv4()
-console.log(`Server Session ID: ${serverSessionId}`)
+// Server state object to hold mutable server UUID
+const serverState = {
+    sessionId: uuidv4()
+}
+console.log(`Server Session ID: ${serverState.sessionId}`)
+
+// Export server state so it can be accessed/modified by routes
+module.exports.serverState = serverState
+module.exports.wss = wss
 
 // Set up Handlebars as the view engine
 app.engine("handlebars", engine({
@@ -66,8 +72,11 @@ app.use(authRoutes)
 // Use other routes
 app.use(routes)
 
-// Setup WebSocket handlers
-setupSockets(wss, serverSessionId)
+// Setup WebSocket handlers and capture the socket methods
+const socketMethods = setupSockets(wss, serverState)
+
+// Export socket methods so they can be used by routes
+module.exports.socketMethods = socketMethods
 
 // Helper functions for WebSocket authentication
 const verifyWebSocketSession = (request, callback) => {

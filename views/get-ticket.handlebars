@@ -87,7 +87,13 @@
                         currentServerSessionId = data.serverSessionId;
                     }
 
-                    if (data.type === 'currentServing') {
+                    if (data.type === 'serverSessionReset') {
+                        // Server has reset - clear stored ticket
+                        currentServerSessionId = data.serverSessionId;
+                        localStorage.removeItem('ticketData');
+                        hideTicket();
+                        showError('All tickets have been expired and the queue has been cleared by the administrator. Please get a new ticket if needed.');
+                    } else if (data.type === 'currentServing') {
                         if (data.currentTicket && data.currentTicket.id) {
                             currentServingTicketId = data.currentTicket.id;
                         } else {
