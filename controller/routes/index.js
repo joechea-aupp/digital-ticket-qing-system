@@ -12,7 +12,14 @@ router.get("/health", (req, res) => {
 })
 
 router.get("/", async (req, res) => {
-    res.render("get-ticket", { title: "Get Your Ticket", topic: null })
+    try {
+        const topicModule = require('../../db/topic');
+        const defaultTopic = await topicModule.getDefaultTopic();
+        res.render("get-ticket", { title: "Get Your Ticket", topic: defaultTopic || null })
+    } catch (error) {
+        console.error('Error fetching default topic:', error);
+        res.render("get-ticket", { title: "Get Your Ticket", topic: null })
+    }
 })
 
 router.get("/get-ticket/:topicPrefix", async (req, res) => {
