@@ -58,19 +58,24 @@ function initDatabase() {
                     }
                 });
             } else {
-                // Table exists, check if prefix_id has UNIQUE constraint
-                db.all("PRAGMA index_list(topics)", (err, indexes) => {
-                    if (err) {
-                        console.error('Error checking topics indexes:', err);
-                        return;
-                    }
+                // Table exists, check if prefix_id has UNIQUE constraint by examining the table info
+                const hasPrefixIdColumn = rows.some(col => col.name === 'prefix_id');
+                
+                if (hasPrefixIdColumn) {
+                    // Check if prefix_id already has a UNIQUE constraint by looking at CREATE TABLE statement
+                    db.get("SELECT sql FROM sqlite_master WHERE type='table' AND name='topics'", (err, result) => {
+                        if (err) {
+                            console.error('Error checking topics table SQL:', err);
+                            return;
+                        }
 
-                    const hasUniquePrefix = indexes.some(idx => 
-                        idx.name.includes('prefix_id') && idx.unique
-                    );
+                        const tableSQL = result?.sql || '';
+                        const hasUniqueConstraint = tableSQL.includes('prefix_id') && 
+                                                    (tableSQL.includes('prefix_id TEXT UNIQUE') || 
+                                                     tableSQL.match(/prefix_id.*UNIQUE|UNIQUE.*prefix_id/i));
 
-                    if (!hasUniquePrefix) {
-                        console.log('Migrating topics table to add UNIQUE constraint on prefix_id...');
+                        if (!hasUniqueConstraint) {
+                            console.log('Migrating topics table to add UNIQUE constraint on prefix_id...');
                         // Migration: recreate table with UNIQUE constraint
                         db.serialize(() => {
                             db.run(`
@@ -118,10 +123,11 @@ function initDatabase() {
                                 });
                             });
                         });
-                    } else {
-                        console.log('Topics table already has UNIQUE constraint on prefix_id');
-                    }
-                });
+                        } else {
+                            console.log('All table is good to go');
+                        }
+                    });
+                }
             }
         });
     });
