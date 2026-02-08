@@ -4,274 +4,68 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Get Your Ticket</title>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-        
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 20px;
-        }
-        
-        .container {
-            background: white;
-            border-radius: 12px;
-            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
-            max-width: 500px;
-            width: 100%;
-            padding: 40px;
-        }
-        
-        h1 {
-            color: #333;
-            margin-bottom: 30px;
-            text-align: center;
-        }
-        
-        .form-group {
-            margin-bottom: 25px;
-        }
-        
-        label {
-            display: block;
-            color: #555;
-            font-weight: 600;
-            margin-bottom: 8px;
-        }
-        
-        input[type="text"] {
-            width: 100%;
-            padding: 12px 15px;
-            border: 2px solid #ddd;
-            border-radius: 6px;
-            font-size: 1em;
-            transition: border-color 0.3s;
-        }
-        
-        input[type="text"]:focus {
-            outline: none;
-            border-color: #667eea;
-        }
-        
-        button {
-            width: 100%;
-            padding: 15px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            border: none;
-            border-radius: 6px;
-            font-size: 1.1em;
-            font-weight: 600;
-            cursor: pointer;
-            transition: transform 0.2s;
-        }
-        
-        button:hover {
-            transform: translateY(-2px);
-        }
-        
-        button:active {
-            transform: translateY(0);
-        }
-        
-        button:disabled {
-            opacity: 0.6;
-            cursor: not-allowed;
-            transform: none;
-        }
-        
-        .status {
-            text-align: center;
-            margin-bottom: 20px;
-            padding: 10px;
-            background-color: #f0f0f0;
-            border-radius: 6px;
-            font-size: 0.9em;
-        }
-        
-        .status-indicator {
-            display: inline-block;
-            width: 8px;
-            height: 8px;
-            border-radius: 50%;
-            margin-right: 6px;
-            animation: pulse 2s infinite;
-        }
-        
-        .status-indicator.connected {
-            background-color: #4CAF50;
-        }
-        
-        .status-indicator.disconnected {
-            background-color: #f44336;
-            animation: none;
-        }
-        
-        @keyframes pulse {
-            0%, 100% {
-                opacity: 1;
-            }
-            50% {
-                opacity: 0.5;
-            }
-        }
-        
-        .result {
-            display: none;
-            text-align: center;
-            padding: 30px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            border-radius: 8px;
-            color: white;
-            margin-top: 20px;
-        }
-        
-        .result.show {
-            display: block;
-        }
-        
-        .result h2 {
-            margin-bottom: 20px;
-            font-size: 1.5em;
-        }
-        
-        .ticket-number {
-            font-size: 5em;
-            font-weight: bold;
-            margin: 20px 0;
-            text-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-        }
-
-        .ticket-number.expired {
-            color: #b3b3b3;
-            text-decoration: line-through;
-        }
-        
-        .position-info {
-            font-size: 1.1em;
-            opacity: 0.9;
-            margin-top: 15px;
-        }
-        
-        .new-ticket-btn {
-            margin-top: 20px;
-            background: white;
-            color: #667eea;
-        }
-        
-        .alert {
-            padding: 12px;
-            margin-bottom: 20px;
-            border-radius: 6px;
-            display: none;
-        }
-        
-        .alert.show {
-            display: block;
-        }
-        
-        .alert.error {
-            background-color: #ffebee;
-            color: #c62828;
-            border: 1px solid #ef5350;
-        }
-        
-        .alert.warning {
-            background-color: #fff3e0;
-            color: #e65100;
-            border: 1px solid #ff9800;
-        }
-        
-        .tickets-remaining {
-            background: #f8f9fa;
-            border-left: 4px solid #667eea;
-            padding: 15px;
-            margin-bottom: 20px;
-            border-radius: 6px;
-            display: none;
-        }
-        
-        .tickets-remaining.show {
-            display: block;
-        }
-        
-        .tickets-remaining h3 {
-            color: #555;
-            font-size: 0.9em;
-            margin-bottom: 8px;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-        }
-        
-        .tickets-remaining-number {
-            font-size: 2.5em;
-            font-weight: bold;
-            color: #667eea;
-        }
-        
-        .tickets-remaining-text {
-            font-size: 0.9em;
-            color: #666;
-            margin-top: 5px;
-        }
-        
-        .tickets-remaining-number.expired {
-            color: #999;
-            text-decoration: line-through;
-        }
-    </style>
+    <link rel="stylesheet" href="/styles/main.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
 </head>
-<body>
-    <div class="container">
-        <h1>Get Your Ticket</h1>
-        
-        <div class="status">
-            <span class="status-indicator disconnected" id="statusIndicator"></span>
-            <span id="statusText">Connecting...</span>
+<body class="min-h-screen bg-gradient-to-br from-indigo-50 via-sky-50 to-emerald-50 font-['Space_Grotesk'] text-slate-900">
+    <div class="relative flex min-h-screen items-center justify-center px-4 py-10">
+        <div class="pointer-events-none absolute inset-0">
+            <div class="absolute -top-16 right-6 h-44 w-44 rounded-full bg-indigo-200/60 blur-3xl"></div>
+            <div class="absolute -bottom-20 left-6 h-52 w-52 rounded-full bg-emerald-200/70 blur-3xl"></div>
         </div>
-        
-        <div class="tickets-remaining" id="ticketsRemainingContainer">
-            <h3>Tickets Until Your Turn</h3>
-            <div class="tickets-remaining-number" id="ticketsRemainingDisplay">0</div>
-            <div class="tickets-remaining-text" id="ticketsRemainingText"></div>
-        </div>
-        
-        <div class="alert error" id="errorAlert"></div>
-        <div class="alert warning" id="expiredAlert"></div>
-        
-        <div id="formContainer">
-            <div class="form-group">
-                <label for="userName">Your Name</label>
-                <input 
-                    type="text" 
-                    id="userName" 
-                    placeholder="Enter your name" 
-                    required
-                    autocomplete="name"
-                >
+
+        <main class="relative w-full max-w-lg rounded-2xl bg-white/90 p-8 shadow-2xl ring-1 ring-slate-200/60 sm:p-10">
+            <header class="text-center">
+                <p class="text-xs font-semibold uppercase tracking-[0.3em] text-emerald-500">Welcome</p>
+                <h1 class="mt-2 text-3xl font-semibold text-slate-900">Get Your Ticket</h1>
+                <p class="mt-2 text-sm text-slate-500">Join the live queue and track your turn.</p>
+            </header>
+
+            <div class="mt-6 flex items-center justify-center">
+                <div class="inline-flex items-center gap-2 rounded-full bg-slate-100 px-4 py-2 text-xs font-semibold text-slate-600">
+                    <span id="statusIndicator" class="inline-block h-2 w-2 rounded-full bg-rose-500"></span>
+                    <span id="statusText">Connecting...</span>
+                </div>
             </div>
-            
-            <button id="getTicketBtn" onclick="getTicket()" disabled>
-                Get Ticket
-            </button>
-        </div>
-        
-        <div class="result" id="resultContainer">
-            <h2>Your Ticket</h2>
-            <div class="ticket-number" id="ticketNumber">-</div>
-            <div class="position-info">
-                <p id="positionText"></p>
+
+            <div id="ticketsRemainingContainer" class="mt-6 hidden rounded-xl border border-slate-100 bg-slate-50 px-4 py-4">
+                <p class="text-xs font-semibold uppercase tracking-wide text-slate-500">Tickets Until Your Turn</p>
+                <div id="ticketsRemainingDisplay" class="mt-2 text-3xl font-semibold text-emerald-600">0</div>
+                <p id="ticketsRemainingText" class="mt-1 text-sm text-slate-500"></p>
             </div>
-            <button class="new-ticket-btn" onclick="resetForm()">Get Another Ticket</button>
-        </div>
+
+            <div id="errorAlert" class="mt-6 hidden rounded-lg border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700" role="alert"></div>
+            <div id="expiredAlert" class="mt-4 hidden rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-700" role="alert"></div>
+
+            <section id="formContainer" class="mt-6 space-y-5">
+                <div>
+                    <label for="userName" class="text-sm font-semibold text-slate-600">Your Name</label>
+                    <input
+                        type="text"
+                        id="userName"
+                        placeholder="Enter your name"
+                        required
+                        autocomplete="name"
+                        class="mt-2 w-full rounded-lg border border-slate-200 px-4 py-3 text-sm text-slate-800 placeholder:text-slate-400 focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-200"
+                    >
+                </div>
+
+                <button id="getTicketBtn" onclick="getTicket()" disabled class="w-full rounded-lg bg-emerald-600 px-4 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-emerald-700 disabled:bg-slate-200 disabled:text-slate-500 disabled:shadow-none">
+                    Get Ticket
+                </button>
+            </section>
+
+            <section id="resultContainer" class="mt-6 hidden rounded-2xl bg-gradient-to-br from-emerald-500 via-teal-500 to-sky-500 px-6 py-8 text-center text-white shadow-lg">
+                <h2 class="text-lg font-semibold">Your Ticket</h2>
+                <div id="ticketNumber" class="mt-4 text-6xl font-bold drop-shadow">-</div>
+                <div class="mt-3 text-sm text-white/90">
+                    <p id="positionText"></p>
+                </div>
+                <button class="mt-6 w-full rounded-lg bg-white/90 px-4 py-2.5 text-sm font-semibold text-emerald-700 shadow-sm transition hover:bg-white" onclick="resetForm()">Get Another Ticket</button>
+            </section>
+        </main>
     </div>
 
     <script>
@@ -281,45 +75,42 @@
         let myTicket = null;
         let currentServingTicketId = null;
         let agents = [];
-        
+
+        const connectedClasses = ["bg-emerald-500", "animate-pulse"];
+        const disconnectedClasses = ["bg-rose-500"];
+
         function connectWebSocket() {
             const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
             ws = new WebSocket(`${protocol}//${window.location.host}/ws/get-ticket`);
-            
+
             ws.onopen = () => {
                 console.log('WebSocket connected');
                 updateStatus(true);
                 document.getElementById('getTicketBtn').disabled = false;
             };
-            
+
             ws.onmessage = (event) => {
                 try {
                     const data = JSON.parse(event.data);
-                    
-                    // Store server session ID when received
+
                     if (data.serverSessionId) {
                         currentServerSessionId = data.serverSessionId;
                     }
-                    
-                    // Handle current serving updates
+
                     if (data.type === 'currentServing') {
                         if (data.currentTicket && data.currentTicket.id) {
                             currentServingTicketId = data.currentTicket.id;
                         } else {
                             currentServingTicketId = null;
                         }
-                        // Store agents info for availability check
                         if (data.agents) {
                             agents = data.agents;
                         }
                         updateTicketsRemaining();
-                        // Validate stored ticket against server session ID
                         if (currentServerSessionId) {
                             validateStoredTicket(currentServerSessionId);
                         }
-                    }
-                    // Handle ticket assignment
-                    else if (data.success && data.ticket) {
+                    } else if (data.success && data.ticket) {
                         showTicket(data.ticket, data.position);
                         saveTicketToStorage(data.ticket, data.position, data.serverSessionId);
                     } else if (data.error) {
@@ -330,12 +121,12 @@
                     showError('Error receiving response');
                 }
             };
-            
+
             ws.onerror = (error) => {
                 console.error('WebSocket error:', error);
                 updateStatus(false);
             };
-            
+
             ws.onclose = () => {
                 console.log('WebSocket disconnected');
                 updateStatus(false);
@@ -343,89 +134,96 @@
                 setTimeout(connectWebSocket, 3000);
             };
         }
-        
+
         function updateStatus(connected) {
             const indicator = document.getElementById('statusIndicator');
             const text = document.getElementById('statusText');
-            
+
+            indicator.classList.remove(...connectedClasses, ...disconnectedClasses);
             if (connected) {
-                indicator.classList.remove('disconnected');
-                indicator.classList.add('connected');
+                indicator.classList.add(...connectedClasses);
                 text.textContent = 'Connected';
             } else {
-                indicator.classList.remove('connected');
-                indicator.classList.add('disconnected');
+                indicator.classList.add(...disconnectedClasses);
                 text.textContent = 'Disconnected';
             }
         }
-        
+
+        function setTicketsRemainingDisplay({ value, className, text }) {
+            const display = document.getElementById('ticketsRemainingDisplay');
+            const description = document.getElementById('ticketsRemainingText');
+
+            display.textContent = value;
+            display.className = className;
+            description.textContent = text;
+        }
+
         function updateTicketsRemaining() {
             const container = document.getElementById('ticketsRemainingContainer');
-            const display = document.getElementById('ticketsRemainingDisplay');
-            const text = document.getElementById('ticketsRemainingText');
-            
+
             if (!myTicket || !myTicket.id) {
-                container.classList.remove('show');
+                container.classList.add('hidden');
                 return;
             }
-            
-            // Check if any agents are available
+
             const hasAvailableAgents = agents && agents.length > 0;
-            
+
             if (!hasAvailableAgents) {
-                // No agents available
-                display.textContent = '';
-                text.textContent = 'No agent available. Thank you for patiently waiting.';
-                container.classList.add('show');
+                setTicketsRemainingDisplay({
+                    value: '',
+                    className: 'mt-2 text-2xl font-semibold text-slate-500',
+                    text: 'No agent available. Thank you for patiently waiting.'
+                });
+                container.classList.remove('hidden');
                 return;
             }
-            
+
             if (currentServingTicketId === null || currentServingTicketId === undefined) {
-                // No one is being served yet, but agents are available
-                display.textContent = '';
-                text.textContent = 'Waiting for agent to call next ticket.';
-                container.classList.add('show');
+                setTicketsRemainingDisplay({
+                    value: '',
+                    className: 'mt-2 text-2xl font-semibold text-slate-500',
+                    text: 'Waiting for agent to call next ticket.'
+                });
+                container.classList.remove('hidden');
                 return;
             }
-            
+
             const ticketsRemaining = myTicket.id - currentServingTicketId;
-            
+
             if (ticketsRemaining < 0) {
-                // Your ticket has passed - expired
-                display.textContent = 'PASSED';
-                display.className = 'tickets-remaining-number';
-                text.textContent = 'Your ticket has passed. Please contact the counter.';
-                document.getElementById('ticketNumber').classList.add('expired');
-                container.classList.add('show');
+                setTicketsRemainingDisplay({
+                    value: 'PASSED',
+                    className: 'mt-2 text-2xl font-semibold text-slate-400 line-through',
+                    text: 'Your ticket has passed. Please contact the counter.'
+                });
+                document.getElementById('ticketNumber').classList.add('line-through');
+                container.classList.remove('hidden');
             } else if (ticketsRemaining === 0) {
-                // Your turn - find which agent is serving this ticket
                 let servingAgent = null;
                 if (agents && agents.length > 0) {
-                    servingAgent = agents.find(agent => 
+                    servingAgent = agents.find(agent =>
                         agent.currentTicket && agent.currentTicket.id === myTicket.id
                     );
                 }
-                
-                display.textContent = 'Your turn!';
-                display.className = 'tickets-remaining-number';
-                
-                if (servingAgent) {
-                    text.textContent = `Please go to counter ${servingAgent.name}`;
-                } else {
-                    text.textContent = "It's your turn! Please proceed to the counter.";
-                }
-                
-                document.getElementById('ticketNumber').classList.remove('expired');
-                container.classList.add('show');
+
+                setTicketsRemainingDisplay({
+                    value: 'Your turn!',
+                    className: 'mt-2 text-2xl font-semibold text-emerald-600',
+                    text: servingAgent ? `Please go to counter ${servingAgent.name}` : "It's your turn! Please proceed to the counter."
+                });
+                document.getElementById('ticketNumber').classList.remove('line-through');
+                container.classList.remove('hidden');
             } else {
-                display.textContent = ticketsRemaining;
-                display.className = 'tickets-remaining-number';
-                text.textContent = ticketsRemaining === 1 ? 'ticket ahead of you' : 'tickets ahead of you';
-                document.getElementById('ticketNumber').classList.remove('expired');
-                container.classList.add('show');
+                setTicketsRemainingDisplay({
+                    value: ticketsRemaining,
+                    className: 'mt-2 text-3xl font-semibold text-emerald-600',
+                    text: ticketsRemaining === 1 ? 'ticket ahead of you' : 'tickets ahead of you'
+                });
+                document.getElementById('ticketNumber').classList.remove('line-through');
+                container.classList.remove('hidden');
             }
         }
-        
+
         function saveTicketToStorage(ticket, position, serverSessionId) {
             const ticketData = {
                 ticket: ticket,
@@ -435,30 +233,27 @@
             };
             localStorage.setItem(STORAGE_KEY, JSON.stringify(ticketData));
         }
-        
+
         function loadTicketFromStorage() {
             try {
                 const stored = localStorage.getItem(STORAGE_KEY);
                 if (stored) {
                     const ticketData = JSON.parse(stored);
-                    // Show stored ticket (will be validated when server session ID arrives)
                     showTicket(ticketData.ticket, ticketData.position);
                 }
             } catch (e) {
                 console.error('Error loading ticket from storage:', e);
             }
         }
-        
+
         function validateStoredTicket(serverSessionId) {
             try {
                 const stored = localStorage.getItem(STORAGE_KEY);
                 if (!stored) return;
-                
+
                 const ticketData = JSON.parse(stored);
-                
-                // Check if server session ID matches
+
                 if (ticketData.serverSessionId && ticketData.serverSessionId !== serverSessionId) {
-                    // Ticket is from a previous server session - expired
                     console.log('Ticket expired: server session changed');
                     showExpiredTicketMessage();
                     clearTicketFromStorage();
@@ -467,91 +262,86 @@
                 console.error('Error validating stored ticket:', e);
             }
         }
-        
+
         function clearTicketFromStorage() {
             localStorage.removeItem(STORAGE_KEY);
         }
-        
+
         function getTicket() {
             const nameInput = document.getElementById('userName');
             const name = nameInput.value.trim();
-            
+
             if (!name) {
                 showError('Please enter your name');
                 nameInput.focus();
                 return;
             }
-            
+
             if (!ws || ws.readyState !== WebSocket.OPEN) {
                 showError('Not connected to server');
                 return;
             }
-            
+
             ws.send(JSON.stringify({
                 action: 'getTicket',
                 name: name
             }));
         }
-        
+
         function showTicket(ticket, position) {
             myTicket = ticket;
             const ticketNumberEl = document.getElementById('ticketNumber');
             ticketNumberEl.textContent = ticket.id;
-            ticketNumberEl.classList.remove('expired');
-            
-            document.getElementById('formContainer').style.display = 'none';
-            document.getElementById('resultContainer').classList.add('show');
+            ticketNumberEl.classList.remove('line-through');
+
+            document.getElementById('formContainer').classList.add('hidden');
+            document.getElementById('resultContainer').classList.remove('hidden');
             updateTicketsRemaining();
         }
-        
+
         function resetForm() {
             myTicket = null;
             document.getElementById('userName').value = '';
-            document.getElementById('formContainer').style.display = 'block';
-            document.getElementById('resultContainer').classList.remove('show');
-            document.getElementById('ticketNumber').classList.remove('expired');
-            document.getElementById('errorAlert').classList.remove('show');
-            document.getElementById('ticketsRemainingContainer').classList.remove('show');
+            document.getElementById('formContainer').classList.remove('hidden');
+            document.getElementById('resultContainer').classList.add('hidden');
+            document.getElementById('ticketNumber').classList.remove('line-through');
+            document.getElementById('errorAlert').classList.add('hidden');
+            document.getElementById('ticketsRemainingContainer').classList.add('hidden');
             clearTicketFromStorage();
         }
-        
+
         function showError(message) {
             const alert = document.getElementById('errorAlert');
             alert.textContent = message;
-            alert.classList.add('show');
-            setTimeout(() => alert.classList.remove('show'), 3000);
+            alert.classList.remove('hidden');
+            setTimeout(() => alert.classList.add('hidden'), 3000);
         }
-        
+
         function showExpiredTicketMessage() {
             const alert = document.getElementById('expiredAlert');
             alert.innerHTML = '<strong>Ticket Expired:</strong> The server has been restarted. Please get a new ticket.';
-            alert.classList.add('show');
-            
-            // Reset form to allow getting a new ticket
+            alert.classList.remove('hidden');
+
             myTicket = null;
             document.getElementById('userName').value = '';
-            document.getElementById('formContainer').style.display = 'block';
-            document.getElementById('resultContainer').classList.remove('show');
-            document.getElementById('ticketsRemainingContainer').classList.remove('show');
-            
-            // Keep the message visible for 10 seconds
-            setTimeout(() => alert.classList.remove('show'), 10000);
+            document.getElementById('formContainer').classList.remove('hidden');
+            document.getElementById('resultContainer').classList.add('hidden');
+            document.getElementById('ticketsRemainingContainer').classList.add('hidden');
+
+            setTimeout(() => alert.classList.add('hidden'), 10000);
         }
-        
-        // Allow Enter key to submit
+
         document.getElementById('userName').addEventListener('keypress', (e) => {
             if (e.key === 'Enter') {
                 getTicket();
             }
         });
-        
-        // Connect when page loads
+
         window.addEventListener('load', () => {
             loadTicketFromStorage();
             connectWebSocket();
         });
-        
-        // Cleanup on page unload
+
         window.addEventListener('beforeunload', () => {
             if (ws) ws.close();
         });
