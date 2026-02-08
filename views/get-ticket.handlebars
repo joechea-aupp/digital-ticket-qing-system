@@ -214,13 +214,13 @@
                 return;
             }
 
-            // Find the lowest ticket number being served across all agents
-            let lowestServingTicketId = null;
+            // Find the highest ticket number being served across all agents
+            let highestServingTicketId = null;
             if (window.servedTicketIds && window.servedTicketIds.length > 0) {
-                lowestServingTicketId = Math.min(...window.servedTicketIds);
+                highestServingTicketId = Math.max(...window.servedTicketIds);
             }
 
-            if (lowestServingTicketId === null) {
+            if (highestServingTicketId === null) {
                 if (lastServedTicketId !== null && myTicket.id < lastServedTicketId) {
                     setTicketsRemainingDisplay({
                         value: 'Expired',
@@ -242,9 +242,20 @@
                 return;
             }
 
-            const ticketsRemaining = myTicket.id - lowestServingTicketId;
+            const ticketsRemaining = myTicket.id - highestServingTicketId;
 
-            if (ticketsRemaining < 0 || (lastServedTicketId !== null && myTicket.id < lastServedTicketId)) {
+            if (ticketsRemaining === 0) {
+                // Your ticket is the highest being served (it's your turn!)
+                setTicketsRemainingDisplay({
+                    value: 'Your turn!',
+                    className: 'mt-2 text-2xl font-semibold your-turn-text',
+                    text: 'Please go to the counter'
+                });
+                setTicketCardExpired(false);
+                setTicketCardYourTurn(true);
+                document.getElementById('ticketNumber').classList.remove('line-through');
+                container.classList.remove('hidden');
+            } else if (ticketsRemaining < 0 || (lastServedTicketId !== null && myTicket.id < lastServedTicketId)) {
                 setTicketsRemainingDisplay({
                     value: 'Expired',
                     className: 'mt-2 text-2xl font-semibold text-slate-300',
