@@ -46,10 +46,11 @@
         const connectedClasses = ["bg-emerald-500", "animate-pulse"];
         const disconnectedClasses = ["bg-rose-500"];
 
-        // Play happy-bell.wav sound
+        // Play user's preferred notification sound
         function playDingSound() {
             try {
-                const audio = new Audio('/sounds/happy-bell.wav');
+                const notificationSound = '{{notificationSound}}' || 'happy-bell.wav';
+                const audio = new Audio(`/sounds/${notificationSound}`);
                 audio.volume = 0.5; // Set volume to 50%
                 audio.play().catch(error => {
                     console.warn('Could not play ding sound:', error);
