@@ -14,6 +14,11 @@
                 Queue Management
             </a>
         {{/if}}
+        {{#if showTopic}}
+            <a href="/topic" class="block px-4 py-2.5 rounded-lg {{topicClass}}">
+                Topics
+            </a>
+        {{/if}}
         {{#if showStations}}
             <a href="/stations" class="block px-4 py-2.5 rounded-lg {{stationsClass}}">
                 Manage Stations

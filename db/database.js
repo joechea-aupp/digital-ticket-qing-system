@@ -31,6 +31,24 @@ function initDatabase() {
                 console.log('Users table initialized');
             }
         });
+
+        // Create topics table
+        db.run(`
+            CREATE TABLE IF NOT EXISTS topics (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                name TEXT UNIQUE NOT NULL,
+                prefix_id TEXT NOT NULL,
+                description TEXT,
+                is_default INTEGER DEFAULT 0,
+                created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+            )
+        `, (err) => {
+            if (err) {
+                console.error('Error creating topics table:', err);
+            } else {
+                console.log('Topics table initialized');
+            }
+        });
     });
 }
 

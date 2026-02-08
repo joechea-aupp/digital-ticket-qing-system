@@ -7,6 +7,7 @@ const { engine } = require("express-handlebars")
 const { v4: uuidv4 } = require("uuid")
 const routes = require("./controller/routes")
 const authRoutes = require("./controller/auth-routes")
+const topicsRoutes = require("./controller/topics-routes")
 const setupSockets = require("./controller/sockets")
 const cookieParser = require("cookie-parser")
 
@@ -68,6 +69,9 @@ app.use((req, res, next) => {
 
 // Use auth routes first
 app.use(authRoutes)
+
+// Use topic routes
+app.use(topicsRoutes)
 
 // Use other routes
 app.use(routes)
