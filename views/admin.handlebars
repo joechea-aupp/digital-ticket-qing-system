@@ -99,6 +99,8 @@
 
     {{> layout-scripts }}
 
+    <div id="actionMenuContainer" class="fixed inset-0 pointer-events-none z-50"></div>
+
     <script>
         let ws = null;
         let queue = [];
@@ -203,20 +205,10 @@
                                             `}
                                         </td>
                                         <td class="px-4 py-3">
-                                            <div class="flex flex-wrap gap-2">
-                                                <button class="rounded-md bg-emerald-600 px-3 py-1.5 text-xs font-semibold text-white shadow-sm transition hover:bg-emerald-700 disabled:bg-slate-200 disabled:text-slate-500 disabled:shadow-none" onclick="nextTicket(${agent.id})" ${queue.length === 0 ? 'disabled' : ''}>
-                                                    Next
-                                                </button>
-                                                <button class="rounded-md bg-sky-600 px-3 py-1.5 text-xs font-semibold text-white shadow-sm transition hover:bg-sky-700" onclick="togglePause(${agent.id}, ${agent.isPaused ? 'false' : 'true'})">
-                                                    ${agent.isPaused ? 'Resume' : 'Pause'}
-                                                </button>
-                                                <button class="rounded-md bg-amber-500 px-3 py-1.5 text-xs font-semibold text-white shadow-sm transition hover:bg-amber-600 disabled:bg-slate-200 disabled:text-slate-500 disabled:shadow-none" onclick="clearCurrent(${agent.id})" ${!agent.currentTicket ? 'disabled' : ''}>
-                                                    Clear
-                                                </button>
-                                                <button class="rounded-md bg-rose-600 px-3 py-1.5 text-xs font-semibold text-white shadow-sm transition hover:bg-rose-700" onclick="removeAgent(${agent.id})">
-                                                    Remove
-                                                </button>
-                                            </div>
+                                            <button class="action-btn rounded-md bg-slate-700 px-3 py-1.5 text-xs font-semibold text-white shadow-sm transition hover:bg-slate-800" data-agent-id="${agent.id}" data-queue-length="${queue.length}" data-has-ticket="${agent.currentTicket ? 'true' : 'false'}" data-is-paused="${agent.isPaused ? 'true' : 'false'}">
+                                                Actions
+                                                <span class="ml-1.5 inline-block text-xs">▼</span>
+                                            </button>
                                         </td>
                                     </tr>
                                 `).join('')}
@@ -244,6 +236,9 @@
                     </div>
                 `).join('');
             }
+
+            // Attach event handlers to action buttons
+            attachActionButtonHandlers();
         }
 
         function openModal() {
@@ -283,6 +278,62 @@
 
             agentNameInput.value = '';
             closeModal();
+        }
+
+        function toggleActionMenu(button, event) {
+            event.stopPropagation();
+            
+            // Close any existing menus
+            closeAllMenus();
+            
+            if (event.type === 'click') {
+                const agentId = button.dataset.agentId;
+                const queueLength = parseInt(button.dataset.queueLength);
+                const hasTicket = button.dataset.hasTicket === 'true';
+                const isPaused = button.dataset.isPaused === 'true';
+                
+                const rect = button.getBoundingClientRect();
+                const menuContainer = document.getElementById('actionMenuContainer');
+                
+                const menu = document.createElement('div');
+                menu.className = 'action-menu fixed rounded-lg border border-slate-200 bg-white shadow-lg ring-1 ring-slate-100 w-40 pointer-events-auto';
+                menu.style.top = (rect.bottom + 8) + 'px';
+                menu.style.right = (window.innerWidth - rect.right) + 'px';
+                
+                menu.innerHTML = `
+                    <button class="w-full px-4 py-2.5 text-left text-xs font-semibold text-emerald-600 transition hover:bg-emerald-50 disabled:text-slate-300 disabled:hover:bg-white ${queueLength === 0 ? 'opacity-50 cursor-not-allowed' : ''}" onclick="nextTicket(${agentId}); closeAllMenus()" ${queueLength === 0 ? 'disabled' : ''}>
+                        ✓ Next Ticket
+                    </button>
+                    <button class="w-full px-4 py-2.5 text-left text-xs font-semibold text-sky-600 transition hover:bg-sky-50" onclick="togglePause(${agentId}, ${!isPaused}); closeAllMenus()">
+                        ⏸ ${isPaused ? 'Resume' : 'Pause'}
+                    </button>
+                    <button class="w-full px-4 py-2.5 text-left text-xs font-semibold text-amber-600 transition hover:bg-amber-50 disabled:text-slate-300 disabled:hover:bg-white ${!hasTicket ? 'opacity-50 cursor-not-allowed' : ''}" onclick="clearCurrent(${agentId}); closeAllMenus()" ${!hasTicket ? 'disabled' : ''}>
+                        ✕ Clear Current
+                    </button>
+                    <div class="border-t border-slate-100"></div>
+                    <button class="w-full px-4 py-2.5 text-left text-xs font-semibold text-rose-600 transition hover:bg-rose-50" onclick="removeAgent(${agentId}); closeAllMenus()">
+                        🗑 Remove
+                    </button>
+                `;
+                
+                menuContainer.appendChild(menu);
+                menuContainer.classList.remove('pointer-events-none');
+            }
+        }
+
+        function closeAllMenus() {
+            const menuContainer = document.getElementById('actionMenuContainer');
+            menuContainer.innerHTML = '';
+            menuContainer.classList.add('pointer-events-none');
+        }
+
+        document.addEventListener('click', closeAllMenus);
+
+        // Attach click handlers to action buttons when table updates
+        function attachActionButtonHandlers() {
+            document.querySelectorAll('.action-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => toggleActionMenu(btn, e));
+            });
         }
 
         function togglePause(agentId, isPaused) {
