@@ -15,11 +15,11 @@ router.get("/", (req, res) => {
 })
 
 router.get("/ticket-queue", (req, res) => {
-    res.render("ticket-queue", { title: "Ticket Queue Display", layout: false })
+    res.render("ticket-queue", { title: "Ticket Queue Display" })
 })
 
 router.get("/get-ticket", (req, res) => {
-    res.render("get-ticket", { title: "Get Your Ticket", layout: false })
+    res.render("get-ticket", { title: "Get Your Ticket" })
 })
 
 router.get("/stations", (req, res) => {
@@ -27,7 +27,7 @@ router.get("/stations", (req, res) => {
 })
 
 router.get("/admin", (req, res) => {
-    res.render("admin", { title: "Admin Panel", layout: false })
+    res.render("admin", { title: "Admin Panel - Ticket Queue" })
 })
 
 // Station UI route
