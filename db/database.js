@@ -22,6 +22,7 @@ function initDatabase() {
                 username TEXT UNIQUE NOT NULL,
                 password TEXT NOT NULL,
                 role TEXT NOT NULL CHECK(role IN ('admin', 'agent')),
+                notification_sound TEXT DEFAULT 'happy-bell.wav',
                 created_at DATETIME DEFAULT CURRENT_TIMESTAMP
             )
         `, (err) => {
@@ -29,6 +30,16 @@ function initDatabase() {
                 console.error('Error creating users table:', err);
             } else {
                 console.log('Users table initialized');
+                // Add notification_sound column if it doesn't exist (migration)
+                db.run(`
+                    ALTER TABLE users ADD COLUMN notification_sound TEXT DEFAULT 'happy-bell.wav'
+                `, (alterErr) => {
+                    if (alterErr && !alterErr.message.includes('duplicate column')) {
+                        console.error('Error adding notification_sound column:', alterErr);
+                    } else if (!alterErr) {
+                        console.log('Added notification_sound column to users table');
+                    }
+                });
             }
         });
 

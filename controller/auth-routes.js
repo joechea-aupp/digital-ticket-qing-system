@@ -59,12 +59,22 @@ router.get('/logout', (req, res) => {
 });
 
 // Dashboard
-router.get('/dashboard', requireAuth, (req, res) => {
-    res.render('dashboard', {
-        title: 'Dashboard',
-        user: req.session.user,
-        isAdmin: req.session.user.role === 'admin'
-    });
+router.get('/dashboard', requireAuth, async (req, res) => {
+    try {
+        const freshUser = await userModule.getUserById(req.session.user.id);
+        req.session.user = { ...req.session.user, ...freshUser };
+        res.render('dashboard', {
+            title: 'Dashboard',
+            user: req.session.user,
+            isAdmin: req.session.user.role === 'admin'
+        });
+    } catch (error) {
+        console.error('Error loading dashboard:', error);
+        res.status(500).render('error', {
+            title: 'Error',
+            message: 'Failed to load dashboard'
+        });
+    }
 });
 
 // Users management page (admin only)
@@ -184,6 +194,30 @@ router.post('/api/change-password', requireAuth, async (req, res) => {
     } catch (error) {
         console.error('Error changing password:', error);
         res.status(500).json({ error: 'Failed to change password' });
+    }
+});
+
+// Update notification sound preference
+router.post('/api/update-notification-sound', requireAuth, async (req, res) => {
+    try {
+        const { notification_sound } = req.body;
+
+        if (!notification_sound) {
+            return res.status(400).json({ error: 'Notification sound is required' });
+        }
+
+        const validSounds = ['happy-bell.wav', 'clear-announcement.wav', 'software-interface.wav'];
+        if (!validSounds.includes(notification_sound)) {
+            return res.status(400).json({ error: 'Invalid notification sound' });
+        }
+
+        await userModule.updateUser(req.session.user.id, req.session.user.username, req.session.user.role, notification_sound);
+        const refreshedUser = await userModule.getUserById(req.session.user.id);
+        req.session.user = { ...req.session.user, ...refreshedUser };
+        res.json({ message: 'Notification sound updated successfully' });
+    } catch (error) {
+        console.error('Error updating notification sound:', error);
+        res.status(500).json({ error: 'Failed to update notification sound' });
     }
 });
 

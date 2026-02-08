@@ -14,14 +14,14 @@ async function verifyPassword(password, hashedPassword) {
 }
 
 // Create new user
-async function createUser(username, password, role) {
+async function createUser(username, password, role, notificationSound = 'happy-bell.wav') {
     try {
         const hashedPassword = await hashPassword(password);
         const result = await dbRun(
-            'INSERT INTO users (username, password, role) VALUES (?, ?, ?)',
-            [username, hashedPassword, role]
+            'INSERT INTO users (username, password, role, notification_sound) VALUES (?, ?, ?, ?)',
+            [username, hashedPassword, role, notificationSound]
         );
-        return { id: result.lastID, username, role };
+        return { id: result.lastID, username, role, notification_sound: notificationSound };
     } catch (error) {
         throw error;
     }
@@ -39,7 +39,7 @@ async function getUserByUsername(username) {
 // Get user by ID
 async function getUserById(id) {
     try {
-        return await dbGet('SELECT id, username, role, created_at FROM users WHERE id = ?', [id]);
+        return await dbGet('SELECT id, username, role, notification_sound, created_at FROM users WHERE id = ?', [id]);
     } catch (error) {
         throw error;
     }
@@ -48,19 +48,26 @@ async function getUserById(id) {
 // Get all users
 async function getAllUsers() {
     try {
-        return await dbAll('SELECT id, username, role, created_at FROM users ORDER BY created_at DESC');
+        return await dbAll('SELECT id, username, role, notification_sound, created_at FROM users ORDER BY created_at DESC');
     } catch (error) {
         throw error;
     }
 }
 
 // Update user
-async function updateUser(id, username, role) {
+async function updateUser(id, username, role, notificationSound = null) {
     try {
-        await dbRun(
-            'UPDATE users SET username = ?, role = ? WHERE id = ?',
-            [username, role, id]
-        );
+        if (notificationSound) {
+            await dbRun(
+                'UPDATE users SET username = ?, role = ?, notification_sound = ? WHERE id = ?',
+                [username, role, notificationSound, id]
+            );
+        } else {
+            await dbRun(
+                'UPDATE users SET username = ?, role = ? WHERE id = ?',
+                [username, role, id]
+            );
+        }
         return await getUserById(id);
     } catch (error) {
         throw error;
@@ -103,7 +110,8 @@ async function authenticateUser(username, password) {
             return {
                 id: user.id,
                 username: user.username,
-                role: user.role
+                role: user.role,
+                notification_sound: user.notification_sound
             };
         }
         return null;
