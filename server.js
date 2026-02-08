@@ -65,6 +65,20 @@ app.use(routes)
 // Setup WebSocket handlers
 setupSockets(wss, serverSessionId)
 
+// 404 handler - must come after all other routes
+app.use((req, res) => {
+    res.status(404).render('404', { title: '404 - Page Not Found' });
+});
+
+// 500 error handler - must come last
+app.use((err, req, res, next) => {
+    console.error('Error:', err);
+    res.status(500).render('500', { 
+        title: '500 - Server Error',
+        message: process.env.NODE_ENV === 'production' ? 'An error occurred' : err.message 
+    });
+});
+
 server.on("upgrade", (request, socket, head) => {
     const pathname = new URL(request.url, `http://${request.headers.host}`).pathname;
 
