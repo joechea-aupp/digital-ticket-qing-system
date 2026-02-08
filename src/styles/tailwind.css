@@ -1,1 +1,33 @@
 @import "tailwindcss";
+
+@layer components {
+    /* Ticket card states */
+    .ticket-card {
+        background: linear-gradient(135deg, #10b981 0%, #14b8a6 50%, #38bdf8 100%);
+        color: #ffffff;
+    }
+
+    .ticket-card--expired {
+        background: linear-gradient(135deg, #64748b 0%, #475569 50%, #334155 100%);
+        color: #cbd5e1;
+    }
+
+    .ticket-card__button {
+        background: rgba(255, 255, 255, 0.9);
+        color: #047857;
+    }
+
+    .ticket-card__button:hover {
+        background: #ffffff;
+    }
+
+    .ticket-card--expired .ticket-card__button {
+        background: #e2e8f0;
+        color: #475569;
+    }
+
+    .ticket-card--expired .ticket-card__button:hover {
+        background: #f1f5f9;
+        color: #475569;
+    }
+}

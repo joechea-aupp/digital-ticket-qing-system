@@ -58,10 +58,16 @@ const setupSockets = (wss, serverSessionId) => {
             }
         }
         
+        // Get all ticket IDs currently being served
+        const servedTicketIds = agents
+            .filter(agent => agent.currentTicket && agent.currentTicket.id)
+            .map(agent => agent.currentTicket.id);
+    
         const getTicketData = {
             type: 'currentServing',
             currentTicket: currentTicket,
             agents: agents,
+            servedTicketIds: servedTicketIds,
             queueRemaining: ticketQueue.length
         };
         wss.clients.forEach(client => {

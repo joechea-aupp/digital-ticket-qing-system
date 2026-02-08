@@ -17,6 +17,7 @@
     "@tailwindcss/cli": "^4.1.18",
     "@tailwindcss/postcss": "^4.1.18",
     "bcrypt": "^6.0.0",
+    "cookie-parser": "^1.4.6",
     "express": "^5.2.1",
     "express-handlebars": "^8.0.5",
     "express-session": "^1.19.0",

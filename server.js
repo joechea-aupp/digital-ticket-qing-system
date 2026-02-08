@@ -8,6 +8,7 @@ const { v4: uuidv4 } = require("uuid")
 const routes = require("./controller/routes")
 const authRoutes = require("./controller/auth-routes")
 const setupSockets = require("./controller/sockets")
+const cookieParser = require("cookie-parser")
 
 const app = express()
 const server = createServer(app)
@@ -41,14 +42,17 @@ app.set("views", "./views")
 app.use(express.json())
 app.use(express.urlencoded({ extended: true }))
 app.use(express.static("public"))
+app.use(cookieParser())
 
 // Session middleware
-app.use(session({
+const sessionConfig = {
     secret: process.env.SESSION_SECRET || 'your-secret-key-change-in-production',
     resave: false,
     saveUninitialized: false,
     cookie: { secure: false, maxAge: 24 * 60 * 60 * 1000 } // 24 hours
-}))
+}
+const sessionMiddleware = session(sessionConfig)
+app.use(sessionMiddleware)
 
 // Make user available in all templates
 app.use((req, res, next) => {
@@ -64,6 +68,22 @@ app.use(routes)
 
 // Setup WebSocket handlers
 setupSockets(wss, serverSessionId)
+
+// Helper functions for WebSocket authentication
+const verifyWebSocketSession = (request, callback) => {
+    // Use the session middleware to parse the session for the upgrade request
+    sessionMiddleware(request, {}, () => {
+        callback(request.session);
+    });
+};
+
+const isAdminUser = (session) => {
+    return session && session.user && session.user.role === 'admin';
+};
+
+const isAgentOrAdmin = (session) => {
+    return session && session.user && (session.user.role === 'admin' || session.user.role === 'agent');
+};
 
 // 404 handler - must come after all other routes
 app.use((req, res) => {
@@ -84,26 +104,44 @@ server.on("upgrade", (request, socket, head) => {
 
     switch (pathname) {
         case "/ws/ticket-queue":
+            // Public display - no auth required
             wss.handleUpgrade(request, socket, head, (ws) => {
                 wss.emit('show-ticket-queue', ws, request);
             });
             break;
         
         case "/ws/get-ticket":
+            // Public ticket generation - no auth required
             wss.handleUpgrade(request, socket, head, (ws) => {
                 wss.emit('get-ticket', ws, request);
             });
             break;
         
         case "/ws/admin":
-            wss.handleUpgrade(request, socket, head, (ws) => {
-                wss.emit('admin', ws, request);
+            // Admin only - verify authentication
+            verifyWebSocketSession(request, (session) => {
+                if (isAdminUser(session)) {
+                    wss.handleUpgrade(request, socket, head, (ws) => {
+                        wss.emit('admin', ws, request);
+                    });
+                } else {
+                    socket.destroy();
+                    console.warn(`Unauthorized admin WebSocket connection attempt - user: ${session?.user?.username || 'unknown'}`);
+                }
             });
             break;
 
         case "/ws/stations":
-            wss.handleUpgrade(request, socket, head, (ws) => {
-                wss.emit('stations', ws, request);
+            // Agent or admin only - verify authentication
+            verifyWebSocketSession(request, (session) => {
+                if (isAgentOrAdmin(session)) {
+                    wss.handleUpgrade(request, socket, head, (ws) => {
+                        wss.emit('stations', ws, request);
+                    });
+                } else {
+                    socket.destroy();
+                    console.warn(`Unauthorized stations WebSocket connection attempt - user: ${session?.user?.username || 'unknown'}`);
+                }
             });
             break;
         
