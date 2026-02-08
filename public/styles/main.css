@@ -902,6 +902,9 @@
   .bg-sky-50 {
     background-color: var(--color-sky-50);
   }
+  .bg-sky-100 {
+    background-color: var(--color-sky-100);
+  }
   .bg-sky-200 {
     background-color: var(--color-sky-200);
   }

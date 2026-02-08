@@ -49,8 +49,21 @@ router.get("/stations", requireAgentOrAdmin, (req, res) => {
     res.render("stations", { title: "Manage Stations" })
 })
 
-router.get("/admin", requireAdmin, (req, res) => {
-    res.render("admin", { title: "Admin Panel - Ticket Queue" })
+router.get("/admin", requireAdmin, async (req, res) => {
+    try {
+        const topicModule = require('../../db/topic');
+        const topics = await topicModule.getAllTopics();
+        res.render("admin", { 
+            title: "Admin Panel - Ticket Queue",
+            topics: topics 
+        })
+    } catch (error) {
+        console.error('Error fetching topics:', error);
+        res.render("admin", { 
+            title: "Admin Panel - Ticket Queue",
+            topics: [] 
+        })
+    }
 })
 
 // Station UI route

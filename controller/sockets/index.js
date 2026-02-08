@@ -285,15 +285,20 @@ const setupSockets = (wss, serverState) => {
                     const newAgent = {
                         id: agentCounter++,
                         name: data.agentName || `Counter ${agentCounter - 1}`,
+                        topicId: data.topicId || null,
+                        topicName: data.topicName || null,
                         currentTicket: null,
                         previousTicket: null,
                         isPaused: false
                     };
                     agents.push(newAgent);
                     broadcastAll();
+                    const successMessage = data.topicId 
+                        ? `Agent "${newAgent.name}" added and assigned to topic "${data.topicName || 'Topic ' + data.topicId}"`
+                        : `Agent "${newAgent.name}" added`;
                     ws.send(JSON.stringify({ 
                         success: true, 
-                        message: 'Agent added successfully',
+                        message: successMessage,
                         agent: newAgent 
                     }));
                 } else if (data.action === 'removeAgent') {
@@ -331,9 +336,26 @@ const setupSockets = (wss, serverState) => {
                     }
                     
                     if (ticketQueue.length > 0) {
-                        agent.isPaused = false;
-                        agent.previousTicket = agent.currentTicket;
-                        agent.currentTicket = ticketQueue.shift();
+                        // Check if agent has a topic assigned
+                        if (agent.topicId) {
+                            // Find the next ticket with matching topic
+                            const ticketIndex = ticketQueue.findIndex(t => t.topicId === agent.topicId);
+                            if (ticketIndex === -1) {
+                                ws.send(JSON.stringify({ 
+                                    success: false, 
+                                    error: `No tickets available for topic "${agent.topicName || 'Topic ' + agent.topicId}"` 
+                                }));
+                                return;
+                            }
+                            agent.isPaused = false;
+                            agent.previousTicket = agent.currentTicket;
+                            agent.currentTicket = ticketQueue.splice(ticketIndex, 1)[0];
+                        } else {
+                            // No topic assigned, get any ticket from queue
+                            agent.isPaused = false;
+                            agent.previousTicket = agent.currentTicket;
+                            agent.currentTicket = ticketQueue.shift();
+                        }
                         broadcastAll();
                     } else {
                         ws.send(JSON.stringify({ 

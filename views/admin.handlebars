@@ -100,6 +100,15 @@
                 <label for="agentName" class="text-sm font-semibold text-slate-600">Counter Name</label>
                 <input type="text" id="agentName" placeholder="e.g., Counter 1, Window A" class="mt-2 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-800 placeholder:text-slate-400 focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-200" />
             </div>
+            <div class="mt-5">
+                <label for="agentTopic" class="text-sm font-semibold text-slate-600">Associated Topic</label>
+                <select id="agentTopic" class="mt-2 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-800 focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-200">
+                    <option value="">-- Select a topic --</option>
+                    {{#each topics}}
+                    <option value="{{this.id}}">{{this.name}} ({{this.prefix_id}})</option>
+                    {{/each}}
+                </select>
+            </div>
             <div class="mt-6 flex items-center justify-end gap-3">
                 <button class="rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-600 transition hover:bg-slate-50" onclick="closeModal()">Cancel</button>
                 <button class="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-emerald-700" onclick="addAgent()">Add Counter</button>
@@ -189,6 +198,7 @@
                             <thead class="bg-slate-900 text-white">
                                 <tr>
                                     <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide">Name</th>
+                                    <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide">Topic</th>
                                     <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide">Serving</th>
                                     <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide">Customer</th>
                                     <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide">Status</th>
@@ -199,6 +209,9 @@
                                 ${agents.map(agent => `
                                     <tr class="hover:bg-slate-50">
                                         <td class="px-4 py-3 font-semibold text-slate-800">${agent.name}</td>
+                                        <td class="px-4 py-3">
+                                            ${agent.topicId ? `<span class="text-xs font-semibold text-sky-600 bg-sky-50 px-2 py-1 rounded">${agent.topicName || 'Topic ' + agent.topicId}</span>` : '<span class="text-slate-400 italic">No topic</span>'}
+                                        </td>
                                         <td class="px-4 py-3">
                                             ${agent.currentTicket ? `
                                                 <span class="inline-flex items-center rounded-md bg-slate-900 px-2 py-0.5 text-xs font-semibold text-white">${agent.currentTicket.id}</span>
@@ -265,14 +278,22 @@
             modal.classList.remove('flex');
             modal.setAttribute('aria-hidden', 'true');
             document.getElementById('agentName').value = '';
+            document.getElementById('agentTopic').value = '';
         }
 
         function addAgent() {
             const agentNameInput = document.getElementById('agentName');
+            const agentTopicInput = document.getElementById('agentTopic');
             const agentName = agentNameInput.value.trim();
+            const topicId = agentTopicInput.value.trim();
 
             if (!agentName) {
                 showError('Please enter a counter name');
+                return;
+            }
+
+            if (!topicId) {
+                showError('Please select an associated topic');
                 return;
             }
 
@@ -281,12 +302,19 @@
                 return;
             }
 
+            // Get the topic name from the selected option
+            const selectedOption = agentTopicInput.options[agentTopicInput.selectedIndex];
+            const topicName = selectedOption.text.split(' (')[0]; // Extract name before the prefix
+
             ws.send(JSON.stringify({
                 action: 'addAgent',
-                agentName: agentName
+                agentName: agentName,
+                topicId: parseInt(topicId),
+                topicName: topicName
             }));
 
             agentNameInput.value = '';
+            agentTopicInput.value = '';
             closeModal();
         }
 
