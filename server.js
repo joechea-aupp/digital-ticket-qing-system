@@ -54,6 +54,7 @@ app.use(express.urlencoded({ extended: true }))
 app.use(express.static("public"))
 app.use(cookieParser())
 
+const port = process.env.PORT || 8080
 // Session middleware
 const sessionConfig = {
     secret: process.env.SESSION_SECRET || 'your-secret-key-change-in-production',
@@ -166,6 +167,6 @@ server.on("upgrade", (request, socket, head) => {
     }
 })
 
-server.listen(8080, () => {
-    console.log("http://localhost:8080")
+server.listen(port, () => {
+    console.log(`http://localhost:${port}`)
 })
