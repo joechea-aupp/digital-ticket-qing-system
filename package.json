@@ -11,8 +11,11 @@
   "license": "ISC",
   "type": "commonjs",
   "dependencies": {
+    "@tailwindcss/postcss": "^4.1.18",
     "express": "^5.2.1",
     "express-handlebars": "^8.0.5",
+    "postcss": "^8.5.6",
+    "tailwindcss": "^4.1.18",
     "uuid": "^13.0.0",
     "ws": "^8.19.0"
   }
