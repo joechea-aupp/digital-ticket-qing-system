@@ -1697,9 +1697,19 @@
       scale: var(--tw-scale-x) var(--tw-scale-y);
     }
   }
+  .disabled\:cursor-not-allowed {
+    &:disabled {
+      cursor: not-allowed;
+    }
+  }
   .disabled\:bg-slate-200 {
     &:disabled {
       background-color: var(--color-slate-200);
+    }
+  }
+  .disabled\:bg-slate-300 {
+    &:disabled {
+      background-color: var(--color-slate-300);
     }
   }
   .disabled\:text-slate-300 {
@@ -1710,6 +1720,11 @@
   .disabled\:text-slate-500 {
     &:disabled {
       color: var(--color-slate-500);
+    }
+  }
+  .disabled\:opacity-50 {
+    &:disabled {
+      opacity: 50%;
     }
   }
   .disabled\:shadow-none {

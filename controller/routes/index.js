@@ -114,10 +114,23 @@ router.get("/station/:id", requireAuth, (req, res) => {
         });
     }
     
+    // Check if there are tickets available for this station
+    let hasAvailableTickets = false;
+    if (state.ticketQueue.length > 0) {
+        if (station.topicId) {
+            // Check if there are tickets for this specific topic
+            hasAvailableTickets = state.ticketQueue.some(t => t.topicId === station.topicId);
+        } else {
+            // No topic assigned, can serve any ticket
+            hasAvailableTickets = true;
+        }
+    }
+    
     res.json({
         success: true,
         station: station,
-        queueRemaining: state.ticketQueue.length
+        queueRemaining: state.ticketQueue.length,
+        hasAvailableTickets: hasAvailableTickets
     });
 });
 

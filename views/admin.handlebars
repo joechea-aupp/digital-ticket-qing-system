@@ -228,7 +228,7 @@
                                             `}
                                         </td>
                                         <td class="px-4 py-3">
-                                            <button class="action-btn rounded-md bg-slate-700 px-3 py-1.5 text-xs font-semibold text-white shadow-sm transition hover:bg-slate-800" data-agent-id="${agent.id}" data-queue-length="${queue.length}" data-has-ticket="${agent.currentTicket ? 'true' : 'false'}" data-is-paused="${agent.isPaused ? 'true' : 'false'}">
+                                            <button class="action-btn rounded-md bg-slate-700 px-3 py-1.5 text-xs font-semibold text-white shadow-sm transition hover:bg-slate-800" data-agent-id="${agent.id}" data-queue-length="${queue.length}" data-has-ticket="${agent.currentTicket ? 'true' : 'false'}" data-is-paused="${agent.isPaused ? 'true' : 'false'}" data-topic-id="${agent.topicId || ''}" data-has-available-tickets="${agent.topicId ? (queue.some(t => t.topicId === agent.topicId) ? 'true' : 'false') : (queue.length > 0 ? 'true' : 'false')}">
                                                 Actions
                                                 <span class="ml-1.5 inline-block text-xs">▼</span>
                                             </button>
@@ -329,6 +329,7 @@
                 const queueLength = parseInt(button.dataset.queueLength);
                 const hasTicket = button.dataset.hasTicket === 'true';
                 const isPaused = button.dataset.isPaused === 'true';
+                const hasAvailableTickets = button.dataset.hasAvailableTickets === 'true';
                 
                 const rect = button.getBoundingClientRect();
                 const menuContainer = document.getElementById('actionMenuContainer');
@@ -339,7 +340,7 @@
                 menu.style.right = (window.innerWidth - rect.right) + 'px';
                 
                 menu.innerHTML = `
-                    <button class="w-full px-4 py-2.5 text-left text-xs font-semibold text-emerald-600 transition hover:bg-emerald-50 disabled:text-slate-300 disabled:hover:bg-white ${queueLength === 0 ? 'opacity-50 cursor-not-allowed' : ''}" onclick="nextTicket(${agentId}); closeAllMenus()" ${queueLength === 0 ? 'disabled' : ''}>
+                    <button class="w-full px-4 py-2.5 text-left text-xs font-semibold text-emerald-600 transition hover:bg-emerald-50 disabled:text-slate-300 disabled:hover:bg-white ${!hasAvailableTickets ? 'opacity-50 cursor-not-allowed' : ''}" onclick="nextTicket(${agentId}); closeAllMenus()" ${!hasAvailableTickets ? 'disabled' : ''}>
                         ✓ Next Ticket
                     </button>
                     <button class="w-full px-4 py-2.5 text-left text-xs font-semibold text-sky-600 transition hover:bg-sky-50" onclick="togglePause(${agentId}, ${!isPaused}); closeAllMenus()">
