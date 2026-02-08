@@ -12,6 +12,11 @@
         color: #cbd5e1;
     }
 
+    .ticket-card--your-turn {
+        background: linear-gradient(135deg, #F4E590 0%, #E5BC2A 35%, #D99420 70%, #B36800 100%);
+        color: #ffffff;
+    }
+
     .ticket-card__button {
         background: rgba(255, 255, 255, 0.9);
         color: #047857;
@@ -29,5 +34,28 @@
     .ticket-card--expired .ticket-card__button:hover {
         background: #f1f5f9;
         color: #475569;
+    }
+
+    .ticket-card--your-turn .ticket-card__button {
+        background: rgba(255, 255, 255, 0.95);
+        color: #B36800;
+    }
+
+    .ticket-card--your-turn .ticket-card__button:hover {
+        background: #ffffff;
+    }
+
+    .your-turn-text {
+        background: linear-gradient(135deg, #F4E590 0%, #E5BC2A 35%, #D99420 70%, #B36800 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        animation: popIn 0.5s ease-out;
+    }
+
+    @keyframes popIn {
+        0% { transform: scale(0.8); opacity: 0; }
+        50% { transform: scale(1.1); }
+        100% { transform: scale(1); opacity: 1; }
     }
 }
