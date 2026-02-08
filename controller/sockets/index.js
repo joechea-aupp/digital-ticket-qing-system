@@ -304,6 +304,11 @@ const setupSockets = (wss, serverSessionId) => {
                         return;
                     }
                     
+                    // Return the current ticket to the queue
+                    if (agent.currentTicket) {
+                        ticketQueue.unshift(agent.currentTicket);
+                    }
+                    
                     agent.previousTicket = agent.currentTicket;
                     agent.currentTicket = null;
                     broadcastAll();

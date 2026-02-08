@@ -129,6 +129,11 @@ router.post("/station/:id/clear-current", requireAuth, (req, res) => {
         });
     }
     
+    // Return the current ticket to the queue
+    if (agent.currentTicket) {
+        state.ticketQueue.unshift(agent.currentTicket);
+    }
+    
     agent.previousTicket = agent.currentTicket;
     agent.currentTicket = null;
     
@@ -139,7 +144,7 @@ router.post("/station/:id/clear-current", requireAuth, (req, res) => {
     
     res.json({
         success: true,
-        message: "Cleared current ticket",
+        message: "Ticket returned to queue",
         station: agent,
         queueRemaining: state.ticketQueue.length
     });
