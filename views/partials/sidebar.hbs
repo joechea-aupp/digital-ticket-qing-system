@@ -4,19 +4,14 @@
         <p class="text-xs text-slate-500 mt-1">{{sidebarSubtitle}}</p>
     </div>
     <nav class="space-y-2">
-        {{#if showQueue}}
-            <a href="/admin" class="block px-4 py-2.5 rounded-lg {{queueClass}}">
-                Queue Management
-            </a>
-        {{/if}}
         {{#if showDashboard}}
             <a href="/dashboard" class="block px-4 py-2.5 rounded-lg {{dashboardClass}}">
                 {{#if dashboardLabel}}{{dashboardLabel}}{{else}}Dashboard{{/if}}
             </a>
         {{/if}}
-        {{#if showUsers}}
-            <a href="/users" class="block px-4 py-2.5 rounded-lg {{usersClass}}">
-                Manage Users
+        {{#if showQueue}}
+            <a href="/admin" class="block px-4 py-2.5 rounded-lg {{queueClass}}">
+                Queue Management
             </a>
         {{/if}}
         {{#if showStations}}

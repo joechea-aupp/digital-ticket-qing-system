@@ -5,7 +5,6 @@
             sidebarSubtitle="Manage your queue"
             showQueue=true
             showDashboard=true
-            showUsers=false
             showStations=true
             queueClass="bg-emerald-100 text-emerald-700 font-medium text-sm transition"
             dashboardClass="text-slate-600 hover:bg-slate-100 font-medium text-sm transition"
@@ -14,7 +13,7 @@
 
         <!-- Main Content -->
         <div class="w-full md:ml-64 transition-all duration-300">
-            {{> header-bar headerTitle="Queue Management" }}
+            {{> header-bar headerTitle="Queue Management" showProfile=true }}
 
             <div class="pointer-events-none absolute inset-0">
                 <div class="absolute -top-20 right-4 h-48 w-48 rounded-full bg-emerald-200/60 blur-3xl"></div>
