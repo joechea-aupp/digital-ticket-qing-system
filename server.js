@@ -40,6 +40,9 @@ app.engine("handlebars", engine({
                 hour: '2-digit',
                 minute: '2-digit'
             });
+        },
+        json: function(obj) {
+            return JSON.stringify(obj);
         }
     }
 }))

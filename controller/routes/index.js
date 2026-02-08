@@ -11,8 +11,30 @@ router.get("/health", (req, res) => {
     res.status(200).json({ status: "ok" })
 })
 
-router.get("/", (req, res) => {
-    res.render("get-ticket", { title: "Get Your Ticket" })
+router.get("/", async (req, res) => {
+    res.render("get-ticket", { title: "Get Your Ticket", topic: null })
+})
+
+router.get("/get-ticket/:topicPrefix", async (req, res) => {
+    try {
+        const topicModule = require('../../db/topic');
+        const topic = await topicModule.getTopicByPrefix(req.params.topicPrefix);
+        
+        if (!topic) {
+            return res.status(404).render("error", { 
+                title: "Topic Not Found",
+                message: `Topic with prefix '${req.params.topicPrefix}' not found`
+            });
+        }
+        
+        res.render("get-ticket", { title: "Get Your Ticket", topic: topic })
+    } catch (error) {
+        console.error('Error fetching topic:', error);
+        return res.status(500).render("error", { 
+            title: "Error",
+            message: "Failed to fetch topic"
+        });
+    }
 })
 
 router.get("/get-ticket", (req, res) => {

@@ -196,6 +196,7 @@ const setupSockets = (wss, serverState) => {
                     const newTicket = {
                         id: ticketCounter++,
                         name: data.name,
+                        topic: data.topic || null,
                         time: new Date().toISOString()
                     };
                     ticketQueue.push(newTicket);

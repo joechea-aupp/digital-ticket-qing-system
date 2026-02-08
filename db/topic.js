@@ -94,6 +94,19 @@ async function setDefaultTopic(id) {
     }
 }
 
+// Get topic by prefix
+async function getTopicByPrefix(prefix) {
+    try {
+        const topic = await dbGet('SELECT id, name, prefix_id, description, is_default FROM topics WHERE prefix_id = ?', [prefix.toUpperCase()]);
+        if (topic) {
+            topic.is_default = !!topic.is_default; // Convert to boolean
+        }
+        return topic;
+    } catch (error) {
+        throw error;
+    }
+}
+
 module.exports = {
     createTopic,
     getTopicById,
@@ -101,5 +114,6 @@ module.exports = {
     getDefaultTopic,
     updateTopic,
     deleteTopic,
-    setDefaultTopic
+    setDefaultTopic,
+    getTopicByPrefix
 };
