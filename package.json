@@ -4,6 +4,9 @@
   "description": "",
   "main": "index.js",
   "scripts": {
+    "dev": "nodemon --watch . --ext js,css server.js",
+    "dev:css": "tailwindcss -i ./src/styles/tailwind.css -o ./public/styles/main.css --content \"./views/**/*.{handlebars,hbs}\" --watch",
+    "build:css": "tailwindcss -i ./src/styles/tailwind.css -o ./public/styles/main.css --content \"./views/**/*.{handlebars,hbs}\" --minify",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
@@ -11,6 +14,7 @@
   "license": "ISC",
   "type": "commonjs",
   "dependencies": {
+    "@tailwindcss/cli": "^4.1.18",
     "@tailwindcss/postcss": "^4.1.18",
     "express": "^5.2.1",
     "express-handlebars": "^8.0.5",
@@ -18,5 +22,8 @@
     "tailwindcss": "^4.1.18",
     "uuid": "^13.0.0",
     "ws": "^8.19.0"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.11"
   }
 }

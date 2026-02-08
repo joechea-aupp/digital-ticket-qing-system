@@ -23,6 +23,7 @@ app.set("view engine", "handlebars")
 app.set("views", "./views")
 
 app.use(express.json())
+app.use(express.static("public"))
 
 // Use routes
 app.use(routes)
@@ -64,5 +65,5 @@ server.on("upgrade", (request, socket, head) => {
 })
 
 server.listen(8080, () => {
-    console.log("Server is listening on port 8080")
+    console.log("http://localhost:8080")
 })

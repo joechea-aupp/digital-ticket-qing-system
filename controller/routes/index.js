@@ -27,7 +27,7 @@ router.get("/stations", (req, res) => {
 })
 
 router.get("/admin", (req, res) => {
-    res.render("admin", { title: "Admin Panel" })
+    res.render("admin", { title: "Admin Panel", layout: false })
 })
 
 // Station UI route
