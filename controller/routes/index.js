@@ -43,7 +43,7 @@ router.get("/station-view/:id", (req, res) => {
     res.render("station", { 
         title: `${station.name} - Station UI`,
         station: station,
-        stationId: stationId
+        stationId: stationId,
     });
 })
 
