@@ -29,7 +29,7 @@ async function getTopicById(id) {
 // Get all topics
 async function getAllTopics() {
     try {
-        const topics = await dbAll('SELECT id, name, prefix_id, description, is_default FROM topics ORDER BY name ASC');
+        const topics = await dbAll('SELECT id, name, prefix_id, description, is_default FROM topics ORDER BY id ASC');
         return topics.map(t => ({
             ...t,
             is_default: !!t.is_default // Convert to boolean
