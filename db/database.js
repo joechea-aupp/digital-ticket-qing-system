@@ -32,21 +32,96 @@ function initDatabase() {
             }
         });
 
-        // Create topics table
-        db.run(`
-            CREATE TABLE IF NOT EXISTS topics (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                name TEXT UNIQUE NOT NULL,
-                prefix_id TEXT NOT NULL,
-                description TEXT,
-                is_default INTEGER DEFAULT 0,
-                created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-            )
-        `, (err) => {
+        // Check if topics table needs migration (UNIQUE constraint on prefix_id)
+        db.all("PRAGMA table_info(topics)", (err, rows) => {
             if (err) {
-                console.error('Error creating topics table:', err);
+                console.error('Error checking topics table:', err);
+                return;
+            }
+
+            if (!rows || rows.length === 0) {
+                // Table doesn't exist, create it
+                db.run(`
+                    CREATE TABLE topics (
+                        id INTEGER PRIMARY KEY AUTOINCREMENT,
+                        name TEXT UNIQUE NOT NULL,
+                        prefix_id TEXT UNIQUE NOT NULL,
+                        description TEXT,
+                        is_default INTEGER DEFAULT 0,
+                        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+                    )
+                `, (err) => {
+                    if (err) {
+                        console.error('Error creating topics table:', err);
+                    } else {
+                        console.log('Topics table initialized');
+                    }
+                });
             } else {
-                console.log('Topics table initialized');
+                // Table exists, check if prefix_id has UNIQUE constraint
+                db.all("PRAGMA index_list(topics)", (err, indexes) => {
+                    if (err) {
+                        console.error('Error checking topics indexes:', err);
+                        return;
+                    }
+
+                    const hasUniquePrefix = indexes.some(idx => 
+                        idx.name.includes('prefix_id') && idx.unique
+                    );
+
+                    if (!hasUniquePrefix) {
+                        console.log('Migrating topics table to add UNIQUE constraint on prefix_id...');
+                        // Migration: recreate table with UNIQUE constraint
+                        db.serialize(() => {
+                            db.run(`
+                                CREATE TABLE topics_new (
+                                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                                    name TEXT UNIQUE NOT NULL,
+                                    prefix_id TEXT UNIQUE NOT NULL,
+                                    description TEXT,
+                                    is_default INTEGER DEFAULT 0,
+                                    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+                                )
+                            `, (err) => {
+                                if (err) {
+                                    console.error('Error creating new topics table:', err);
+                                    return;
+                                }
+
+                                // Copy data, keeping only first occurrence of duplicate prefix_ids
+                                db.run(`
+                                    INSERT INTO topics_new 
+                                    SELECT id, name, prefix_id, description, is_default, created_at FROM topics
+                                    WHERE id IN (
+                                        SELECT MIN(id) FROM topics GROUP BY prefix_id
+                                    )
+                                `, (err) => {
+                                    if (err) {
+                                        console.error('Error copying topics data:', err);
+                                        return;
+                                    }
+
+                                    db.run(`DROP TABLE topics`, (err) => {
+                                        if (err) {
+                                            console.error('Error dropping old topics table:', err);
+                                            return;
+                                        }
+
+                                        db.run(`ALTER TABLE topics_new RENAME TO topics`, (err) => {
+                                            if (err) {
+                                                console.error('Error renaming topics table:', err);
+                                            } else {
+                                                console.log('✓ Topics table migrated successfully with UNIQUE prefix_id constraint');
+                                            }
+                                        });
+                                    });
+                                });
+                            });
+                        });
+                    } else {
+                        console.log('Topics table already has UNIQUE constraint on prefix_id');
+                    }
+                });
             }
         });
     });

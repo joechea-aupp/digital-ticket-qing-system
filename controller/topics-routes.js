@@ -56,6 +56,9 @@ router.post('/api/topics', requireAdmin, async (req, res) => {
     } catch (error) {
         console.error('Error creating topic:', error);
         if (error.message.includes('UNIQUE constraint failed')) {
+            if (error.message.includes('prefix_id')) {
+                return res.status(400).json({ error: 'Topic prefix must be unique' });
+            }
             return res.status(400).json({ error: 'Topic name must be unique' });
         }
         res.status(500).json({ error: 'Failed to create topic' });
@@ -76,6 +79,9 @@ router.put('/api/topics/:id', requireAdmin, async (req, res) => {
     } catch (error) {
         console.error('Error updating topic:', error);
         if (error.message.includes('UNIQUE constraint failed')) {
+            if (error.message.includes('prefix_id')) {
+                return res.status(400).json({ error: 'Topic prefix must be unique' });
+            }
             return res.status(400).json({ error: 'Topic name must be unique' });
         }
         res.status(500).json({ error: 'Failed to update topic' });
