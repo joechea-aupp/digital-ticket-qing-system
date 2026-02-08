@@ -1,14 +1,29 @@
 let ticketQueue = [];
-let ticketCounter = 1;
+let topicCounters = {}; // Track ticket counter per topic {topicId: counter}
 let agents = []; // Array of agents/counters: {id, name, currentTicket, previousTicket, isPaused}
 let agentCounter = 1;
+
+// Helper function to generate next ticket ID for a topic
+function getNextTicketId(topicId, prefix) {
+    if (!topicCounters[topicId]) {
+        topicCounters[topicId] = 1;
+    }
+    const counter = topicCounters[topicId]++;
+    const paddedCounter = String(counter).padStart(3, '0');
+    const displayId = `${prefix}-${paddedCounter}`;
+    return { 
+        numericId: counter, 
+        displayId: displayId, 
+        prefix: prefix 
+    };
+}
 
 // Export state management functions for use by routes
 const stateManager = {
     getAgents: () => agents,
     getQueue: () => ticketQueue,
-    getTicketCounter: () => ticketCounter,
-    setTicketCounter: (val) => { ticketCounter = val; },
+    getTopicCounters: () => ({ ...topicCounters }),
+    setTopicCounter: (topicId, val) => { topicCounters[topicId] = val; },
     getAgentCounter: () => agentCounter,
     setAgentCounter: (val) => { agentCounter = val; },
     addTicket: (ticket) => { ticketQueue.push(ticket); },
@@ -16,7 +31,7 @@ const stateManager = {
     returnTicketToQueue: (ticket) => { ticketQueue.unshift(ticket); },
     clearQueue: () => { ticketQueue = []; },
     clearAgents: () => { agents = []; },
-    resetCounters: () => { ticketCounter = 1; agentCounter = 1; },
+    resetCounters: () => { topicCounters = {}; agentCounter = 1; },
     getAgent: (agentId) => agents.find(a => a.id === agentId),
     findAgentIndex: (agentId) => agents.findIndex(a => a.id === agentId),
     // Broadcast functions will be set by setupSockets
@@ -63,20 +78,32 @@ const setupSockets = (wss, serverState) => {
         
         // Get all ticket IDs currently being served
         const servedTicketIds = agents
-            .filter(agent => agent.currentTicket && agent.currentTicket.id)
-            .map(agent => agent.currentTicket.id);
+            .filter(agent => agent.currentTicket && agent.currentTicket.displayId)
+            .map(agent => agent.currentTicket.displayId);
 
+        // Find the last served ticket ID by comparing numeric IDs within same topic
         let lastServedTicketId = null;
+        let lastServedNumericId = null;
+        let lastServedTopicId = null;
+        
         for (const agent of agents) {
-            if (agent.currentTicket && agent.currentTicket.id) {
-                lastServedTicketId = lastServedTicketId === null
-                    ? agent.currentTicket.id
-                    : Math.max(lastServedTicketId, agent.currentTicket.id);
+            if (agent.currentTicket && agent.currentTicket.displayId) {
+                if (!lastServedTopicId || agent.currentTicket.topicId === lastServedTopicId) {
+                    if (!lastServedNumericId || agent.currentTicket.numericId > lastServedNumericId) {
+                        lastServedTicketId = agent.currentTicket.displayId;
+                        lastServedNumericId = agent.currentTicket.numericId;
+                        lastServedTopicId = agent.currentTicket.topicId;
+                    }
+                }
             }
-            if (agent.previousTicket && agent.previousTicket.id) {
-                lastServedTicketId = lastServedTicketId === null
-                    ? agent.previousTicket.id
-                    : Math.max(lastServedTicketId, agent.previousTicket.id);
+            if (agent.previousTicket && agent.previousTicket.displayId) {
+                if (!lastServedTopicId || agent.previousTicket.topicId === lastServedTopicId) {
+                    if (!lastServedNumericId || agent.previousTicket.numericId > lastServedNumericId) {
+                        lastServedTicketId = agent.previousTicket.displayId;
+                        lastServedNumericId = agent.previousTicket.numericId;
+                        lastServedTopicId = agent.previousTicket.topicId;
+                    }
+                }
             }
         }
     
@@ -159,20 +186,31 @@ const setupSockets = (wss, serverState) => {
         }
         
         const servedTicketIds = agents
-            .filter(agent => agent.currentTicket && agent.currentTicket.id)
-            .map(agent => agent.currentTicket.id);
+            .filter(agent => agent.currentTicket && agent.currentTicket.displayId)
+            .map(agent => agent.currentTicket.displayId);
 
         let lastServedTicketId = null;
+        let lastServedNumericId = null;
+        let lastServedTopicId = null;
+        
         for (const agent of agents) {
-            if (agent.currentTicket && agent.currentTicket.id) {
-                lastServedTicketId = lastServedTicketId === null
-                    ? agent.currentTicket.id
-                    : Math.max(lastServedTicketId, agent.currentTicket.id);
+            if (agent.currentTicket && agent.currentTicket.displayId) {
+                if (!lastServedTopicId || agent.currentTicket.topicId === lastServedTopicId) {
+                    if (!lastServedNumericId || agent.currentTicket.numericId > lastServedNumericId) {
+                        lastServedTicketId = agent.currentTicket.displayId;
+                        lastServedNumericId = agent.currentTicket.numericId;
+                        lastServedTopicId = agent.currentTicket.topicId;
+                    }
+                }
             }
-            if (agent.previousTicket && agent.previousTicket.id) {
-                lastServedTicketId = lastServedTicketId === null
-                    ? agent.previousTicket.id
-                    : Math.max(lastServedTicketId, agent.previousTicket.id);
+            if (agent.previousTicket && agent.previousTicket.displayId) {
+                if (!lastServedTopicId || agent.previousTicket.topicId === lastServedTopicId) {
+                    if (!lastServedNumericId || agent.previousTicket.numericId > lastServedNumericId) {
+                        lastServedTicketId = agent.previousTicket.displayId;
+                        lastServedNumericId = agent.previousTicket.numericId;
+                        lastServedTopicId = agent.previousTicket.topicId;
+                    }
+                }
             }
         }
 
@@ -192,11 +230,17 @@ const setupSockets = (wss, serverState) => {
                 console.log(`Received message on /ws/get-ticket:`, data);
                 
                 if (data.action === 'getTicket' && data.name) {
-                    // Create new ticket
+                    // Create new ticket with topic-specific ID
+                    const topic = data.topic || {};
+                    const ticketId = getNextTicketId(topic.id || 0, topic.prefix_id || 'GEN');
+                    
                     const newTicket = {
-                        id: ticketCounter++,
+                        numericId: ticketId.numericId,
+                        displayId: ticketId.displayId,
+                        id: ticketId.displayId, // For backward compatibility in views
                         name: data.name,
-                        topic: data.topic || null,
+                        topic: topic,
+                        topicId: topic.id || 0,
                         time: new Date().toISOString()
                     };
                     ticketQueue.push(newTicket);
@@ -367,4 +411,4 @@ const setupSockets = (wss, serverState) => {
 
 module.exports = setupSockets
 module.exports.stateManager = stateManager
-module.exports.getGlobalState = () => ({ agents, ticketQueue, ticketCounter, agentCounter })
+module.exports.getGlobalState = () => ({ agents, ticketQueue, topicCounters, agentCounter })
