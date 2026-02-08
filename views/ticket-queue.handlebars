@@ -41,9 +41,51 @@
 
     <script>
         let ws = null;
+        let previousAgentsState = [];
 
         const connectedClasses = ["bg-emerald-500", "animate-pulse"];
         const disconnectedClasses = ["bg-rose-500"];
+
+        // Play user's preferred notification sound
+        function playDingSound() {
+            try {
+                const notificationSound = '{{notificationSound}}' || 'happy-bell.wav';
+                const audio = new Audio(`/sounds/${notificationSound}`);
+                audio.volume = 0.5; // Set volume to 50%
+                audio.play().catch(error => {
+                    console.warn('Could not play ding sound:', error);
+                });
+            } catch (error) {
+                console.warn('Could not play ding sound:', error);
+            }
+        }
+
+        // Check if a new ticket was assigned to any counter
+        function checkForNewTicketAssignment(newAgents) {
+            if (!Array.isArray(newAgents) || newAgents.length === 0) {
+                return false;
+            }
+
+            let hasNewAssignment = false;
+
+            newAgents.forEach((newAgent) => {
+                const previousAgent = previousAgentsState.find(a => a.id === newAgent.id);
+                
+                // Check if this agent now has a ticket when they didn't before
+                if (newAgent.currentTicket && newAgent.currentTicket.id) {
+                    // If agent didn't exist before, or had no currentTicket before
+                    if (!previousAgent || !previousAgent.currentTicket || !previousAgent.currentTicket.id) {
+                        hasNewAssignment = true;
+                    }
+                    // Also check if the ticket ID changed (new ticket assigned)
+                    else if (previousAgent.currentTicket.id !== newAgent.currentTicket.id) {
+                        hasNewAssignment = true;
+                    }
+                }
+            });
+
+            return hasNewAssignment;
+        }
 
         function connectWebSocket() {
             const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
@@ -92,6 +134,14 @@
         function updateDisplay(data) {
             const agentsDisplayEl = document.getElementById('agentsDisplay');
             const queueRemainingEl = document.getElementById('queueRemaining');
+
+            // Check for new ticket assignment before updating display
+            if (checkForNewTicketAssignment(data.agents)) {
+                playDingSound();
+            }
+
+            // Update previous state for next comparison
+            previousAgentsState = JSON.parse(JSON.stringify(data.agents || []));
 
             queueRemainingEl.textContent = data.queueRemaining || 0;
 

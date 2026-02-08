@@ -49,7 +49,10 @@ router.get("/get-ticket", (req, res) => {
 })
 
 router.get("/ticket-queue",requireAgentOrAdmin, (req, res) => {
-    res.render("ticket-queue", { title: "Ticket Queue Display" })
+    res.render("ticket-queue", { 
+        title: "Ticket Queue Display",
+        notificationSound: req.session.user.notification_sound || 'happy-bell.wav'
+    })
 })
 
 router.get("/stations", requireAgentOrAdmin, (req, res) => {

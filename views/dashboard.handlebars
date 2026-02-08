@@ -38,6 +38,47 @@
                         <button class="inline-flex items-center justify-center rounded-lg bg-slate-900 px-4 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-slate-800" onclick="showChangePasswordModal()">Change Password</button>
                     </div>
                 </section>
+
+                <!-- Notification Sound Settings -->
+                <section class="mt-8 rounded-2xl bg-white/90 p-6 shadow-lg ring-1 ring-slate-200/60">
+                    <div>
+                        <h2 class="text-lg font-semibold text-slate-900">Notification Preferences</h2>
+                        <p class="text-sm text-slate-500">Choose your notification sound</p>
+                    </div>
+                    <div class="mt-6 space-y-4">
+                        <div>
+                            <label for="notificationSoundPref" class="block text-sm font-semibold text-slate-700 mb-3">
+                                Notification Sound
+                            </label>
+                            <div class="flex flex-col gap-3 sm:flex-row">
+                                <select 
+                                    id="notificationSoundPref" 
+                                    data-current-sound="{{user.notification_sound}}"
+                                    class="flex-1 px-4 py-2.5 rounded-lg border border-slate-300 bg-slate-50 text-slate-900 transition focus:border-emerald-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
+                                >
+                                    <option value="happy-bell.wav">Happy Bell (Default)</option>
+                                    <option value="clear-announcement.wav">Clear Announcement</option>
+                                    <option value="software-interface.wav">Software Interface</option>
+                                </select>
+                                <button 
+                                    type="button"
+                                    onclick="previewNotificationSound()"
+                                    class="px-4 py-2.5 rounded-lg border border-slate-300 bg-slate-50 text-slate-700 font-medium transition hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-slate-500/20"
+                                >
+                                    🔊 Preview
+                                </button>
+                                <button 
+                                    type="button"
+                                    onclick="saveNotificationSound()"
+                                    class="px-4 py-2.5 rounded-lg bg-emerald-600 text-white font-medium transition hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
+                                >
+                                    Save
+                                </button>
+                            </div>
+                            <div id="soundMessage" class="mt-3"></div>
+                        </div>
+                    </div>
+                </section>
             </main>
         </div>
     </div>
@@ -123,4 +164,50 @@
             errorDiv.classList.remove('hidden');
         }
     });
+
+    const soundSelect = document.getElementById('notificationSoundPref');
+    if (soundSelect) {
+        const currentSound = soundSelect.dataset.currentSound || 'happy-bell.wav';
+        soundSelect.value = currentSound;
+    }
+
+    // Notification sound functions
+    async function saveNotificationSound() {
+        const soundSelect = document.getElementById('notificationSoundPref');
+        const notificationSound = soundSelect.value;
+        const messageDiv = document.getElementById('soundMessage');
+
+        try {
+            const response = await fetch('/api/update-notification-sound', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ notification_sound: notificationSound })
+            });
+
+            const data = await response.json();
+
+            if (!response.ok) {
+                messageDiv.innerHTML = `<div class="rounded-lg border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">${data.error || 'Failed to save notification sound'}</div>`;
+                return;
+            }
+
+            messageDiv.innerHTML = '<div class="rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">Notification sound saved successfully!</div>';
+            setTimeout(() => {
+                messageDiv.innerHTML = '';
+            }, 3000);
+        } catch (error) {
+            messageDiv.innerHTML = '<div class="rounded-lg border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">An error occurred</div>';
+        }
+    }
+
+    function previewNotificationSound() {
+        const soundSelect = document.getElementById('notificationSoundPref');
+        const soundFile = soundSelect.value;
+        const audioPath = `/sounds/${soundFile}`;
+        const audio = new Audio(audioPath);
+        audio.play().catch(error => {
+            console.error('Error playing sound:', error);
+            alert('Failed to play sound');
+        });
+    }
 </script>
