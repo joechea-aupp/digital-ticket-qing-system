@@ -64,6 +64,7 @@
         let myTicket = null;
         let currentServingTicketId = null;
         let agents = [];
+        let lastServedTicketId = null;
 
         const connectedClasses = ["bg-emerald-500", "animate-pulse"];
         const disconnectedClasses = ["bg-rose-500"];
@@ -91,6 +92,11 @@
                             currentServingTicketId = data.currentTicket.id;
                         } else {
                             currentServingTicketId = null;
+                        }
+                        if (typeof data.lastServedTicketId === 'number') {
+                            lastServedTicketId = data.lastServedTicketId;
+                        } else {
+                            lastServedTicketId = null;
                         }
                         if (data.servedTicketIds) {
                             // Use the served ticket IDs list for more reliable checking
@@ -156,6 +162,11 @@
             ticketCard.classList.toggle('ticket-card--expired', isExpired);
         }
 
+        function setTicketCardYourTurn(isYourTurn) {
+            const ticketCard = document.getElementById('resultContainer');
+            ticketCard.classList.toggle('ticket-card--your-turn', isYourTurn);
+        }
+
         function updateTicketsRemaining() {
             const container = document.getElementById('ticketsRemainingContainer');
 
@@ -173,6 +184,7 @@
                     text: 'No agent available. Thank you for patiently waiting.'
                 });
                 setTicketCardExpired(false);
+                setTicketCardYourTurn(false);
                 container.classList.remove('hidden');
                 return;
             }
@@ -192,10 +204,11 @@
             if (servingAgent) {
                 setTicketsRemainingDisplay({
                     value: 'Your turn!',
-                    className: 'mt-2 text-2xl font-semibold text-emerald-600',
+                    className: 'mt-2 text-2xl font-semibold your-turn-text',
                     text: `Please go to counter ${servingAgentName}`
                 });
                 setTicketCardExpired(false);
+                setTicketCardYourTurn(true);
                 document.getElementById('ticketNumber').classList.remove('line-through');
                 container.classList.remove('hidden');
                 return;
@@ -208,25 +221,37 @@
             }
 
             if (lowestServingTicketId === null) {
+                if (lastServedTicketId !== null && myTicket.id < lastServedTicketId) {
+                    setTicketsRemainingDisplay({
+                        value: 'Expired',
+                        className: 'mt-2 text-2xl font-semibold text-slate-300',
+                        text: 'Your ticket has passed. Please contact the counter.'
+                    });
+                    setTicketCardExpired(true);
+                    container.classList.remove('hidden');
+                    return;
+                }
                 setTicketsRemainingDisplay({
                     value: '',
                     className: 'mt-2 text-2xl font-semibold text-slate-500',
                     text: 'Waiting for agent to call next ticket.'
                 });
                 setTicketCardExpired(false);
+                setTicketCardYourTurn(false);
                 container.classList.remove('hidden');
                 return;
             }
 
             const ticketsRemaining = myTicket.id - lowestServingTicketId;
 
-            if (ticketsRemaining < 0) {
+            if (ticketsRemaining < 0 || (lastServedTicketId !== null && myTicket.id < lastServedTicketId)) {
                 setTicketsRemainingDisplay({
                     value: 'Expired',
                     className: 'mt-2 text-2xl font-semibold text-slate-300',
                     text: 'Your ticket has passed. Please contact the counter.'
                 });
                 setTicketCardExpired(true);
+                setTicketCardYourTurn(false);
                 container.classList.remove('hidden');
             } else {
                 setTicketsRemainingDisplay({
@@ -235,6 +260,7 @@
                     text: ticketsRemaining === 1 ? 'ticket ahead of you' : 'tickets ahead of you'
                 });
                 setTicketCardExpired(false);
+                setTicketCardYourTurn(false);
                 container.classList.remove('hidden');
             }
         }

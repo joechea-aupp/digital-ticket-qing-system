@@ -62,12 +62,27 @@ const setupSockets = (wss, serverSessionId) => {
         const servedTicketIds = agents
             .filter(agent => agent.currentTicket && agent.currentTicket.id)
             .map(agent => agent.currentTicket.id);
+
+        let lastServedTicketId = null;
+        for (const agent of agents) {
+            if (agent.currentTicket && agent.currentTicket.id) {
+                lastServedTicketId = lastServedTicketId === null
+                    ? agent.currentTicket.id
+                    : Math.max(lastServedTicketId, agent.currentTicket.id);
+            }
+            if (agent.previousTicket && agent.previousTicket.id) {
+                lastServedTicketId = lastServedTicketId === null
+                    ? agent.previousTicket.id
+                    : Math.max(lastServedTicketId, agent.previousTicket.id);
+            }
+        }
     
         const getTicketData = {
             type: 'currentServing',
             currentTicket: currentTicket,
             agents: agents,
             servedTicketIds: servedTicketIds,
+            lastServedTicketId: lastServedTicketId,
             queueRemaining: ticketQueue.length
         };
         wss.clients.forEach(client => {
@@ -140,10 +155,30 @@ const setupSockets = (wss, serverSessionId) => {
             }
         }
         
+        const servedTicketIds = agents
+            .filter(agent => agent.currentTicket && agent.currentTicket.id)
+            .map(agent => agent.currentTicket.id);
+
+        let lastServedTicketId = null;
+        for (const agent of agents) {
+            if (agent.currentTicket && agent.currentTicket.id) {
+                lastServedTicketId = lastServedTicketId === null
+                    ? agent.currentTicket.id
+                    : Math.max(lastServedTicketId, agent.currentTicket.id);
+            }
+            if (agent.previousTicket && agent.previousTicket.id) {
+                lastServedTicketId = lastServedTicketId === null
+                    ? agent.previousTicket.id
+                    : Math.max(lastServedTicketId, agent.previousTicket.id);
+            }
+        }
+
         ws.send(JSON.stringify({
             type: 'currentServing',
             currentTicket: currentTicket,
             agents: agents,
+            servedTicketIds: servedTicketIds,
+            lastServedTicketId: lastServedTicketId,
             queueRemaining: ticketQueue.length,
             serverSessionId: serverSessionId
         }));
