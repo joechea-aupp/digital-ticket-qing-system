@@ -1,41 +1,20 @@
 <body class="min-h-screen bg-gradient-to-br from-slate-50 via-sky-50 to-emerald-50 font-['Space_Grotesk'] text-slate-900">
     <div class="relative min-h-screen flex">
-        <!-- Sidebar -->
-        <aside id="sidebar" class="fixed left-0 top-0 h-screen w-64 bg-white/90 backdrop-blur border-r border-slate-200 p-6 overflow-y-auto transition-transform duration-300 z-40 md:translate-x-0 -translate-x-full">
-            <div class="mb-8">
-                <h2 class="text-lg font-bold text-slate-900">Admin</h2>
-                <p class="text-xs text-slate-500 mt-1">Manage your queue</p>
-            </div>
-            <nav class="space-y-2">
-                <a href="/admin" class="block px-4 py-2.5 rounded-lg bg-emerald-100 text-emerald-700 font-medium text-sm transition">
-                    Queue Management
-                </a>
-                <a href="/dashboard" class="block px-4 py-2.5 rounded-lg text-slate-600 hover:bg-slate-100 font-medium text-sm transition">
-                    Dashboard
-                </a>
-                <a href="/stations" class="block px-4 py-2.5 rounded-lg text-slate-600 hover:bg-slate-100 font-medium text-sm transition">
-                    Manage Stations
-                </a>
-            </nav>
-        </aside>
-
-        <!-- Sidebar Overlay (for mobile) -->
-        <div id="sidebarOverlay" class="fixed inset-0 bg-slate-900/50 z-30 hidden md:hidden transition-opacity duration-300"></div>
+        {{> sidebar
+            sidebarTitle="Admin"
+            sidebarSubtitle="Manage your queue"
+            showQueue=true
+            showDashboard=true
+            showUsers=false
+            showStations=true
+            queueClass="bg-emerald-100 text-emerald-700 font-medium text-sm transition"
+            dashboardClass="text-slate-600 hover:bg-slate-100 font-medium text-sm transition"
+            stationsClass="text-slate-600 hover:bg-slate-100 font-medium text-sm transition"
+        }}
 
         <!-- Main Content -->
         <div class="w-full md:ml-64 transition-all duration-300">
-            <!-- Header Bar -->
-            <div class="sticky top-0 z-20 bg-white/80 backdrop-blur border-b border-slate-200 px-4 py-3">
-                <div class="flex items-center justify-between">
-                    <button id="sidebarToggle" class="rounded-lg p-2 text-slate-600 hover:bg-slate-100 transition md:hidden" aria-label="Toggle sidebar">
-                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
-                        </svg>
-                    </button>
-                    <div class="text-sm font-medium text-slate-600">Queue Management</div>
-                    <div class="w-10"></div>
-                </div>
-            </div>
+            {{> header-bar headerTitle="Queue Management" }}
 
             <div class="pointer-events-none absolute inset-0">
                 <div class="absolute -top-20 right-4 h-48 w-48 rounded-full bg-emerald-200/60 blur-3xl"></div>
@@ -111,6 +90,8 @@
         </div>
     </div>
 
+    {{> layout-scripts }}
+
     <script>
         let ws = null;
         let queue = [];
@@ -118,37 +99,6 @@
 
         const connectedClasses = ["bg-emerald-500", "animate-pulse"];
         const disconnectedClasses = ["bg-rose-500"];
-
-        // Sidebar toggle functionality
-        const sidebarToggle = document.getElementById('sidebarToggle');
-        const sidebar = document.getElementById('sidebar');
-        const sidebarOverlay = document.getElementById('sidebarOverlay');
-
-        function toggleSidebar() {
-            const isOpen = sidebar.classList.contains('translate-x-0');
-            if (isOpen) {
-                sidebar.classList.remove('translate-x-0');
-                sidebar.classList.add('-translate-x-full');
-                sidebarOverlay.classList.add('hidden');
-            } else {
-                sidebar.classList.add('translate-x-0');
-                sidebar.classList.remove('-translate-x-full');
-                sidebarOverlay.classList.remove('hidden');
-            }
-        }
-
-        sidebarToggle.addEventListener('click', toggleSidebar);
-        sidebarOverlay.addEventListener('click', toggleSidebar);
-
-        // Close sidebar when a nav link is clicked
-        document.querySelectorAll('#sidebar a').forEach(link => {
-            link.addEventListener('click', () => {
-                if (window.innerWidth < 768) {
-                    toggleSidebar();
-                }
-            });
-        });
-
         function connectWebSocket() {
             const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
             ws = new WebSocket(`${protocol}//${window.location.host}/ws/admin`);

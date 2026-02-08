@@ -1,0 +1,66 @@
+<script>
+    (() => {
+        const sidebarToggle = document.getElementById('sidebarToggle');
+        const sidebar = document.getElementById('sidebar');
+        const sidebarOverlay = document.getElementById('sidebarOverlay');
+
+        const toggleSidebar = () => {
+            if (!sidebar || !sidebarOverlay) {
+                return;
+            }
+            const isOpen = sidebar.classList.contains('translate-x-0');
+            if (isOpen) {
+                sidebar.classList.remove('translate-x-0');
+                sidebar.classList.add('-translate-x-full');
+                sidebarOverlay.classList.add('hidden');
+            } else {
+                sidebar.classList.add('translate-x-0');
+                sidebar.classList.remove('-translate-x-full');
+                sidebarOverlay.classList.remove('hidden');
+            }
+        };
+
+        if (sidebarToggle && sidebar && sidebarOverlay) {
+            sidebarToggle.addEventListener('click', toggleSidebar);
+            sidebarOverlay.addEventListener('click', toggleSidebar);
+
+            document.querySelectorAll('#sidebar a').forEach(link => {
+                link.addEventListener('click', () => {
+                    if (window.innerWidth < 768) {
+                        toggleSidebar();
+                    }
+                });
+            });
+        }
+
+        const profileToggle = document.getElementById('profileToggle');
+        const profileMenu = document.getElementById('profileMenu');
+
+        const closeProfileMenu = () => {
+            if (!profileMenu || !profileToggle) {
+                return;
+            }
+            profileMenu.classList.add('hidden');
+            profileToggle.setAttribute('aria-expanded', 'false');
+        };
+
+        if (profileToggle && profileMenu) {
+            profileToggle.addEventListener('click', (event) => {
+                event.stopPropagation();
+                const isHidden = profileMenu.classList.contains('hidden');
+                if (isHidden) {
+                    profileMenu.classList.remove('hidden');
+                    profileToggle.setAttribute('aria-expanded', 'true');
+                } else {
+                    closeProfileMenu();
+                }
+            });
+
+            document.addEventListener('click', (event) => {
+                if (!profileMenu.classList.contains('hidden') && !profileMenu.contains(event.target)) {
+                    closeProfileMenu();
+                }
+            });
+        }
+    })();
+</script>

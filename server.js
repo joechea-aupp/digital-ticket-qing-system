@@ -1,6 +1,7 @@
 const express = require("express")
 const session = require("express-session")
 const { createServer } = require("http")
+const path = require("path")
 const WebSocket = require("ws")
 const { engine } = require("express-handlebars")
 const { v4: uuidv4 } = require("uuid")
@@ -20,6 +21,7 @@ console.log(`Server Session ID: ${serverSessionId}`)
 app.engine("handlebars", engine({
     extname: ".hbs",
     defaultLayout: "main",
+    partialsDir: [path.join(__dirname, "views", "partials")],
     helpers: {
         formatDate: function(date) {
             if (!date) return '';
