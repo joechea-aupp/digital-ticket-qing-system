@@ -19,15 +19,15 @@ router.get("/get-ticket", (req, res) => {
     res.redirect("/")
 })
 
-router.get("/ticket-queue", (req, res) => {
+router.get("/ticket-queue",requireAgentOrAdmin, (req, res) => {
     res.render("ticket-queue", { title: "Ticket Queue Display" })
 })
 
-router.get("/stations", requireAuth, (req, res) => {
+router.get("/stations", requireAgentOrAdmin, (req, res) => {
     res.render("stations", { title: "Manage Stations" })
 })
 
-router.get("/admin", requireAuth, (req, res) => {
+router.get("/admin", requireAdmin, (req, res) => {
     res.render("admin", { title: "Admin Panel - Ticket Queue" })
 })
 
