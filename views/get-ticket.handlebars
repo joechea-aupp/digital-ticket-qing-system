@@ -90,9 +90,8 @@
                     if (data.type === 'serverSessionReset') {
                         // Server has reset - clear stored ticket
                         currentServerSessionId = data.serverSessionId;
-                        localStorage.removeItem('ticketData');
-                        hideTicket();
-                        showError('All tickets have been expired and the queue has been cleared by the administrator. Please get a new ticket if needed.');
+                        clearTicketFromStorage();
+                        showExpiredTicketMessage();
                     } else if (data.type === 'currentServing') {
                         if (data.currentTicket && data.currentTicket.id) {
                             currentServingTicketId = data.currentTicket.id;
@@ -376,7 +375,7 @@
 
         function showExpiredTicketMessage() {
             const alert = document.getElementById('expiredAlert');
-            alert.innerHTML = '<strong>Ticket Expired:</strong> The server has been restarted. Please get a new ticket.';
+            alert.innerHTML = '<strong>Ticket Expired:</strong> All tickets have been expired by the administrator. Please enter your name to get a new ticket.';
             alert.classList.remove('hidden');
 
             myTicket = null;
