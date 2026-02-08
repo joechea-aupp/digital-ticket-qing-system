@@ -1,6 +1,7 @@
 const express = require("express")
 const router = express.Router()
 const setupSockets = require("../sockets")
+const { requireAuth, requireAdmin, requireAgentOrAdmin } = require("../../middleware/auth")
 
 // Get the global state manager
 const getState = () => setupSockets.getGlobalState();
@@ -22,16 +23,16 @@ router.get("/ticket-queue", (req, res) => {
     res.render("ticket-queue", { title: "Ticket Queue Display" })
 })
 
-router.get("/stations", (req, res) => {
+router.get("/stations", requireAuth, (req, res) => {
     res.render("stations", { title: "Manage Stations" })
 })
 
-router.get("/admin", (req, res) => {
+router.get("/admin", requireAuth, (req, res) => {
     res.render("admin", { title: "Admin Panel - Ticket Queue" })
 })
 
 // Station UI route
-router.get("/station-view/:id", (req, res) => {
+router.get("/station-view/:id", requireAuth, (req, res) => {
     const state = getState();
     const stationId = parseInt(req.params.id);
     const station = state.agents.find(a => a.id === stationId);
@@ -49,7 +50,7 @@ router.get("/station-view/:id", (req, res) => {
 
 // Station endpoints
 // Get all stations
-router.get("/station", (req, res) => {
+router.get("/station", requireAuth, (req, res) => {
     const state = getState();
     res.json({
         success: true,
@@ -59,7 +60,7 @@ router.get("/station", (req, res) => {
 });
 
 // Get specific station details
-router.get("/station/:id", (req, res) => {
+router.get("/station/:id", requireAuth, (req, res) => {
     const state = getState();
     const stationId = parseInt(req.params.id);
     const station = state.agents.find(a => a.id === stationId);
@@ -79,7 +80,7 @@ router.get("/station/:id", (req, res) => {
 });
 
 // Advance to next ticket for a specific station
-router.post("/station/:id/next-ticket", (req, res) => {
+router.post("/station/:id/next-ticket", requireAuth, (req, res) => {
     const state = getState();
     const stationId = parseInt(req.params.id);
     const agent = state.agents.find(a => a.id === stationId);
@@ -116,7 +117,7 @@ router.post("/station/:id/next-ticket", (req, res) => {
 });
 
 // Clear current ticket for a specific station
-router.post("/station/:id/clear-current", (req, res) => {
+router.post("/station/:id/clear-current", requireAuth, (req, res) => {
     const state = getState();
     const stationId = parseInt(req.params.id);
     const agent = state.agents.find(a => a.id === stationId);

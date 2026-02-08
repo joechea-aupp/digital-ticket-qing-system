@@ -1,9 +1,11 @@
 const express = require("express")
+const session = require("express-session")
 const { createServer } = require("http")
 const WebSocket = require("ws")
 const { engine } = require("express-handlebars")
 const { v4: uuidv4 } = require("uuid")
 const routes = require("./controller/routes")
+const authRoutes = require("./controller/auth-routes")
 const setupSockets = require("./controller/sockets")
 
 const app = express()
@@ -17,15 +19,45 @@ console.log(`Server Session ID: ${serverSessionId}`)
 // Set up Handlebars as the view engine
 app.engine("handlebars", engine({
     extname: ".hbs",
-    defaultLayout: "main"
+    defaultLayout: "main",
+    helpers: {
+        formatDate: function(date) {
+            if (!date) return '';
+            return new Date(date).toLocaleDateString('en-US', {
+                year: 'numeric',
+                month: 'short',
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+        }
+    }
 }))
 app.set("view engine", "handlebars")
 app.set("views", "./views")
 
 app.use(express.json())
+app.use(express.urlencoded({ extended: true }))
 app.use(express.static("public"))
 
-// Use routes
+// Session middleware
+app.use(session({
+    secret: process.env.SESSION_SECRET || 'your-secret-key-change-in-production',
+    resave: false,
+    saveUninitialized: false,
+    cookie: { secure: false, maxAge: 24 * 60 * 60 * 1000 } // 24 hours
+}))
+
+// Make user available in all templates
+app.use((req, res, next) => {
+    res.locals.user = req.session && req.session.user ? req.session.user : null;
+    next();
+});
+
+// Use auth routes first
+app.use(authRoutes)
+
+// Use other routes
 app.use(routes)
 
 // Setup WebSocket handlers

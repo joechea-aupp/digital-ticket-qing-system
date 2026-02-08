@@ -1,0 +1,113 @@
+<div class="container mx-auto px-4 py-8">
+    <div class="flex justify-between items-center mb-8">
+        <h1 class="text-3xl font-bold">Dashboard</h1>
+        <div class="flex gap-4">
+            <span class="text-gray-600">Welcome, <strong>{{user.username}}</strong> ({{user.role}})</span>
+            <a href="/logout" class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded">Logout</a>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <!-- Quick Links -->
+        <div class="bg-white rounded-lg shadow p-6">
+            <h2 class="text-xl font-bold mb-4">Quick Links</h2>
+            <div class="space-y-3">
+                {{#if isAdmin}}
+                    <a href="/users" class="block bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded text-center">Manage Users</a>
+                {{/if}}
+                <a href="/admin" class="block bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded text-center">Admin Panel</a>
+                <a href="/stations" class="block bg-purple-500 hover:bg-purple-600 text-white px-4 py-2 rounded text-center">Manage Stations</a>
+            </div>
+        </div>
+
+        <!-- User Info -->
+        <div class="bg-white rounded-lg shadow p-6">
+            <h2 class="text-xl font-bold mb-4">Account</h2>
+            <div class="space-y-3">
+                <p><strong>Username:</strong> {{user.username}}</p>
+                <p><strong>Role:</strong> <span class="bg-gray-200 px-2 py-1 rounded text-sm">{{user.role}}</span></p>
+                <button class="w-full bg-indigo-500 hover:bg-indigo-600 text-white px-4 py-2 rounded" onclick="showChangePasswordModal()">Change Password</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Change Password Modal -->
+<div id="changePasswordModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+    <div class="bg-white rounded-lg p-8 max-w-md w-full">
+        <h2 class="text-2xl font-bold mb-4">Change Password</h2>
+        <div id="passwordError" class="hidden bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4"></div>
+        <form id="changePasswordForm">
+            <div class="mb-4">
+                <label class="block text-gray-700 text-sm font-bold mb-2">Current Password</label>
+                <input type="password" id="currentPassword" required class="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:border-indigo-500">
+            </div>
+            <div class="mb-4">
+                <label class="block text-gray-700 text-sm font-bold mb-2">New Password</label>
+                <input type="password" id="newPassword" required class="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:border-indigo-500">
+            </div>
+            <div class="mb-6">
+                <label class="block text-gray-700 text-sm font-bold mb-2">Confirm Password</label>
+                <input type="password" id="confirmPassword" required class="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:border-indigo-500">
+            </div>
+            <div class="flex gap-2">
+                <button type="submit" class="flex-1 bg-indigo-500 hover:bg-indigo-600 text-white px-4 py-2 rounded">Change Password</button>
+                <button type="button" class="flex-1 bg-gray-400 hover:bg-gray-500 text-white px-4 py-2 rounded" onclick="closeChangePasswordModal()">Cancel</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    function showChangePasswordModal() {
+        document.getElementById('changePasswordModal').classList.remove('hidden');
+    }
+
+    function closeChangePasswordModal() {
+        document.getElementById('changePasswordModal').classList.add('hidden');
+        document.getElementById('changePasswordForm').reset();
+        document.getElementById('passwordError').classList.add('hidden');
+    }
+
+    document.getElementById('changePasswordForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const currentPassword = document.getElementById('currentPassword').value;
+        const newPassword = document.getElementById('newPassword').value;
+        const confirmPassword = document.getElementById('confirmPassword').value;
+        const errorDiv = document.getElementById('passwordError');
+
+        if (newPassword !== confirmPassword) {
+            errorDiv.textContent = 'New passwords do not match';
+            errorDiv.classList.remove('hidden');
+            return;
+        }
+
+        if (newPassword.length < 6) {
+            errorDiv.textContent = 'New password must be at least 6 characters long';
+            errorDiv.classList.remove('hidden');
+            return;
+        }
+
+        try {
+            const response = await fetch('/api/change-password', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ currentPassword, newPassword })
+            });
+
+            const data = await response.json();
+
+            if (!response.ok) {
+                errorDiv.textContent = data.error || 'Failed to change password';
+                errorDiv.classList.remove('hidden');
+                return;
+            }
+
+            alert('Password changed successfully');
+            closeChangePasswordModal();
+        } catch (error) {
+            errorDiv.textContent = 'An error occurred';
+            errorDiv.classList.remove('hidden');
+        }
+    });
+</script>

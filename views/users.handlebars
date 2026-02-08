@@ -1,0 +1,186 @@
+<div class="container mx-auto px-4 py-8">
+    <div class="flex justify-between items-center mb-8">
+        <h1 class="text-3xl font-bold">Manage Users</h1>
+        <div class="flex gap-4">
+            <button class="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded" onclick="showCreateUserModal()">Add New User</button>
+            <a href="/dashboard" class="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded">Back to Dashboard</a>
+        </div>
+    </div>
+
+    <div id="messageContainer"></div>
+
+    <!-- Users Table -->
+    <div class="bg-white rounded-lg shadow overflow-hidden">
+        <table class="w-full">
+            <thead class="bg-gray-200">
+                <tr>
+                    <th class="px-6 py-3 text-left">Username</th>
+                    <th class="px-6 py-3 text-left">Role</th>
+                    <th class="px-6 py-3 text-left">Created</th>
+                    <th class="px-6 py-3 text-left">Actions</th>
+                </tr>
+            </thead>
+            <tbody id="usersTable">
+                {{#each users}}
+                <tr class="border-t hover:bg-gray-50">
+                    <td class="px-6 py-3">{{this.username}}</td>
+                    <td class="px-6 py-3">
+                        <span class="bg-blue-100 text-blue-800 px-2 py-1 rounded text-sm">{{this.role}}</span>
+                    </td>
+                    <td class="px-6 py-3 text-sm text-gray-600">
+                        {{formatDate this.created_at}}
+                    </td>
+                    <td class="px-6 py-3">
+                        <button class="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded text-sm mr-2" onclick="editUser({{this.id}})">Edit</button>
+                        <button class="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded text-sm" onclick="deleteUser({{this.id}}, '{{this.username}}')">Delete</button>
+                    </td>
+                </tr>
+                {{/each}}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Create/Edit User Modal -->
+<div id="userModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+    <div class="bg-white rounded-lg p-8 max-w-md w-full">
+        <h2 id="modalTitle" class="text-2xl font-bold mb-4">Create New User</h2>
+        <div id="modalError" class="hidden bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4"></div>
+        <form id="userForm">
+            <div class="mb-4">
+                <label class="block text-gray-700 text-sm font-bold mb-2">Username</label>
+                <input type="text" id="username" required class="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:border-indigo-500">
+            </div>
+            <div id="passwordField" class="mb-4">
+                <label class="block text-gray-700 text-sm font-bold mb-2">Password</label>
+                <input type="password" id="password" required class="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:border-indigo-500">
+            </div>
+            <div class="mb-6">
+                <label class="block text-gray-700 text-sm font-bold mb-2">Role</label>
+                <select id="role" required class="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:border-indigo-500">
+                    <option value="">Select a role</option>
+                    <option value="admin">Admin</option>
+                    <option value="agent">Agent</option>
+                </select>
+            </div>
+            <div class="flex gap-2">
+                <button type="submit" id="submitBtn" class="flex-1 bg-indigo-500 hover:bg-indigo-600 text-white px-4 py-2 rounded">Create User</button>
+                <button type="button" class="flex-1 bg-gray-400 hover:bg-gray-500 text-white px-4 py-2 rounded" onclick="closeUserModal()">Cancel</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    let editingUserId = null;
+
+    function showCreateUserModal() {
+        editingUserId = null;
+        document.getElementById('modalTitle').textContent = 'Create New User';
+        document.getElementById('submitBtn').textContent = 'Create User';
+        document.getElementById('passwordField').style.display = 'block';
+        document.getElementById('password').required = true;
+        document.getElementById('userForm').reset();
+        document.getElementById('modalError').classList.add('hidden');
+        document.getElementById('userModal').classList.remove('hidden');
+    }
+
+    function closeUserModal() {
+        document.getElementById('userModal').classList.add('hidden');
+        editingUserId = null;
+        document.getElementById('userForm').reset();
+        document.getElementById('modalError').classList.add('hidden');
+    }
+
+    async function editUser(userId) {
+        try {
+            const response = await fetch(`/api/users/${userId}`);
+            const user = await response.json();
+            
+            editingUserId = userId;
+            document.getElementById('modalTitle').textContent = 'Edit User';
+            document.getElementById('submitBtn').textContent = 'Update User';
+            document.getElementById('passwordField').style.display = 'none';
+            document.getElementById('password').required = false;
+            document.getElementById('username').value = user.username;
+            document.getElementById('role').value = user.role;
+            document.getElementById('modalError').classList.add('hidden');
+            document.getElementById('userModal').classList.remove('hidden');
+        } catch (error) {
+            alert('Error loading user data');
+        }
+    }
+
+    async function deleteUser(userId, username) {
+        if (!confirm(`Are you sure you want to delete user "${username}"?`)) {
+            return;
+        }
+
+        try {
+            const response = await fetch(`/api/users/${userId}`, {
+                method: 'DELETE'
+            });
+
+            if (!response.ok) {
+                const data = await response.json();
+                alert(data.error || 'Failed to delete user');
+                return;
+            }
+
+            showMessage('User deleted successfully', 'success');
+            setTimeout(() => location.reload(), 1500);
+        } catch (error) {
+            alert('Error deleting user');
+        }
+    }
+
+    document.getElementById('userForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const username = document.getElementById('username').value;
+        const password = document.getElementById('password').value;
+        const role = document.getElementById('role').value;
+        const errorDiv = document.getElementById('modalError');
+
+        if (!username || !role || (editingUserId === null && !password)) {
+            errorDiv.textContent = 'All fields are required';
+            errorDiv.classList.remove('hidden');
+            return;
+        }
+
+        try {
+            const method = editingUserId ? 'PUT' : 'POST';
+            const url = editingUserId ? `/api/users/${editingUserId}` : '/api/users';
+            const body = editingUserId ? { username, role } : { username, password, role };
+
+            const response = await fetch(url, {
+                method,
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(body)
+            });
+
+            const data = await response.json();
+
+            if (!response.ok) {
+                errorDiv.textContent = data.error || 'Failed to save user';
+                errorDiv.classList.remove('hidden');
+                return;
+            }
+
+            showMessage(editingUserId ? 'User updated successfully' : 'User created successfully', 'success');
+            closeUserModal();
+            setTimeout(() => location.reload(), 1500);
+        } catch (error) {
+            errorDiv.textContent = 'An error occurred';
+            errorDiv.classList.remove('hidden');
+        }
+    });
+
+    function showMessage(message, type) {
+        const container = document.getElementById('messageContainer');
+        const bgColor = type === 'success' ? 'bg-green-100' : 'bg-red-100';
+        const textColor = type === 'success' ? 'text-green-700' : 'text-red-700';
+        const borderColor = type === 'success' ? 'border-green-400' : 'border-red-400';
+        
+        container.innerHTML = `<div class="${bgColor} border ${borderColor} ${textColor} px-4 py-3 rounded mb-4">${message}</div>`;
+    }
+</script>

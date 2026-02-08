@@ -16,9 +16,12 @@
   "dependencies": {
     "@tailwindcss/cli": "^4.1.18",
     "@tailwindcss/postcss": "^4.1.18",
+    "bcrypt": "^6.0.0",
     "express": "^5.2.1",
     "express-handlebars": "^8.0.5",
+    "express-session": "^1.19.0",
     "postcss": "^8.5.6",
+    "sqlite3": "^5.1.7",
     "tailwindcss": "^4.1.18",
     "uuid": "^13.0.0",
     "ws": "^8.19.0"
