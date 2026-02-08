@@ -38,7 +38,23 @@
                         </svg>
                     </button>
                     <div class="text-sm font-medium text-slate-600">Dashboard</div>
-                    <a href="/logout" class="inline-flex items-center justify-center rounded-lg bg-rose-500 px-3 py-1.5 text-xs font-semibold text-white shadow-sm transition hover:bg-rose-600">Logout</a>
+                    <div class="relative">
+                        <button id="profileToggle" class="inline-flex items-center gap-2 rounded-lg bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 shadow-sm ring-1 ring-slate-200 transition hover:bg-slate-50" aria-expanded="false" aria-haspopup="true">
+                            <span class="inline-flex h-6 w-6 items-center justify-center rounded-full bg-emerald-100 text-[11px] font-bold text-emerald-700">
+                                {{user.username.[0]}}
+                            </span>
+                            <span class="hidden sm:inline">{{user.username}}</span>
+                            <svg class="h-4 w-4 text-slate-400" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                                <path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.292l3.71-4.06a.75.75 0 111.08 1.04l-4.24 4.64a.75.75 0 01-1.08 0L5.21 8.27a.75.75 0 01.02-1.06z" clip-rule="evenodd" />
+                            </svg>
+                        </button>
+                        <div id="profileMenu" class="absolute right-0 mt-2 hidden w-44 rounded-lg bg-white p-2 text-sm shadow-lg ring-1 ring-slate-200">
+                            <div class="px-3 py-2 text-xs text-slate-500">Signed in as</div>
+                            <div class="px-3 pb-2 text-sm font-semibold text-slate-700">{{user.username}}</div>
+                            <div class="my-2 h-px bg-slate-100"></div>
+                            <a href="/logout" class="block rounded-md px-3 py-2 text-sm font-semibold text-rose-600 hover:bg-rose-50">Logout</a>
+                        </div>
+                    </div>
                 </div>
             </div>
 
@@ -121,6 +137,31 @@
                 toggleSidebar();
             }
         });
+    });
+
+    const profileToggle = document.getElementById('profileToggle');
+    const profileMenu = document.getElementById('profileMenu');
+
+    function closeProfileMenu() {
+        profileMenu.classList.add('hidden');
+        profileToggle.setAttribute('aria-expanded', 'false');
+    }
+
+    profileToggle.addEventListener('click', (event) => {
+        event.stopPropagation();
+        const isHidden = profileMenu.classList.contains('hidden');
+        if (isHidden) {
+            profileMenu.classList.remove('hidden');
+            profileToggle.setAttribute('aria-expanded', 'true');
+        } else {
+            closeProfileMenu();
+        }
+    });
+
+    document.addEventListener('click', (event) => {
+        if (!profileMenu.classList.contains('hidden') && !profileMenu.contains(event.target)) {
+            closeProfileMenu();
+        }
     });
 
     function showChangePasswordModal() {
