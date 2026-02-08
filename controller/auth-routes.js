@@ -209,6 +209,12 @@ router.post('/api/force-expire-tickets', requireAdmin, async (req, res) => {
         // Clear the queue
         stateManager.clearQueue();
         
+        // Clear all agents/counters
+        stateManager.clearAgents();
+        
+        // Reset ticket and agent counters to initial values
+        stateManager.resetCounters();
+        
         // Broadcast the reset to all get-ticket clients
         socketMethods.broadcastServerSessionReset(serverState.sessionId);
         
