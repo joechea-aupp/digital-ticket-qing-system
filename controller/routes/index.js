@@ -151,4 +151,32 @@ router.post("/station/:id/clear-current", requireAuth, (req, res) => {
     });
 });
 
+// Toggle pause for a specific station
+router.post("/station/:id/toggle-pause", requireAuth, (req, res) => {
+    const state = getState();
+    const stationId = parseInt(req.params.id);
+    const agent = state.agents.find(a => a.id === stationId);
+    
+    if (!agent) {
+        return res.status(404).json({
+            success: false,
+            error: "Station not found"
+        });
+    }
+    
+    agent.isPaused = !agent.isPaused;
+    
+    // Broadcast to all connected clients
+    if (setupSockets.stateManager.broadcastAll) {
+        setupSockets.stateManager.broadcastAll();
+    }
+    
+    res.json({
+        success: true,
+        message: agent.isPaused ? 'Counter paused' : 'Counter resumed',
+        station: agent,
+        isPaused: agent.isPaused
+    });
+});
+
 module.exports = router

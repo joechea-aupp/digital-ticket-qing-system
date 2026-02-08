@@ -54,6 +54,7 @@
 
             <div class="mt-8 flex flex-col gap-3 sm:flex-row">
                 <button class="flex-1 rounded-lg bg-emerald-600 px-4 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-emerald-700" onclick="nextTicket()">Next Ticket</button>
+                <button id="pauseBtn" class="flex-1 rounded-lg bg-sky-600 px-4 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-sky-700" onclick="togglePause()">Pause</button>
                 <button class="flex-1 rounded-lg bg-rose-600 px-4 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-rose-700" onclick="clearCurrent()">Clear Current</button>
                 <button class="flex-1 rounded-lg border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-600 shadow-sm transition hover:bg-slate-50" onclick="location.href='/stations'">Back to Stations</button>
             </div>
@@ -106,6 +107,11 @@
                             statusEl.textContent = 'Active';
                             statusEl.className = 'mt-3 inline-flex items-center rounded-full bg-emerald-100 px-3 py-1 text-xs font-semibold text-emerald-700';
                         }
+                    }
+
+                    const pauseBtn = document.getElementById('pauseBtn');
+                    if (pauseBtn) {
+                        pauseBtn.textContent = station.isPaused ? 'Resume' : 'Pause';
                     }
 
                     const currentSection = document.querySelector('.station-current');
@@ -186,6 +192,26 @@
                     refreshStation();
                 } else {
                     showMessage(data.error || 'Failed to clear current ticket', 'error');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                showMessage('Error: ' + error.message, 'error');
+            }
+        }
+
+        async function togglePause() {
+            try {
+                const response = await fetch(`/station/${stationId}/toggle-pause`, {
+                    method: 'POST'
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    showMessage(data.message, 'success');
+                    refreshStation();
+                } else {
+                    showMessage(data.error || 'Failed to toggle pause', 'error');
                 }
             } catch (error) {
                 console.error('Error:', error);
