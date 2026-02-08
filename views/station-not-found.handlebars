@@ -4,69 +4,13 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{title}}</title>
-    <style>
-        html, body {
-            height: 100%;
-        }
-
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            width: 100%;
-            max-width: none;
-            padding: 20px;
-            margin: 0;
-        }
-
-        .container {
-            background-color: white;
-            border-radius: 12px;
-            box-shadow: 0 10px 40px rgba(0,0,0,0.3);
-            max-width: 600px;
-            width: 100%;
-            padding: 40px;
-            text-align: center;
-            margin: 0 auto;
-        }
-
-        h1 {
-            margin: 0 0 10px 0;
-            color: #333;
-            font-size: 1.8em;
-        }
-
-        p {
-            color: #666;
-            margin: 0 0 25px 0;
-        }
-
-        .btn-back {
-            display: inline-block;
-            padding: 12px 24px;
-            background-color: #667eea;
-            color: white;
-            text-decoration: none;
-            border-radius: 6px;
-            font-weight: 600;
-            transition: all 0.3s;
-        }
-
-        .btn-back:hover {
-            background-color: #5a67d8;
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
-        }
-    </style>
+    <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body>
-    <div class="container">
-        <h1>Station Not Found</h1>
-        <p>This station was removed or does not exist.</p>
-        <a class="btn-back" href="/stations">Back to Stations</a>
+<body class="min-h-screen bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center p-5">
+    <div class="bg-white rounded-lg shadow-2xl max-w-md w-full p-10 text-center">
+        <h1 class="text-2xl font-bold text-gray-800 mb-2">Station Not Found</h1>
+        <p class="text-gray-600 mb-6">This station was removed or does not exist.</p>
+        <a href="/stations" class="inline-block py-3 px-6 bg-emerald-600 text-white font-semibold rounded-lg transition-all duration-300 hover:bg-emerald-700 hover:shadow-lg hover:-translate-y-1">Back to Stations</a>
     </div>
 </body>
 </html>
