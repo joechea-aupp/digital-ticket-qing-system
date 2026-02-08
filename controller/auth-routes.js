@@ -6,7 +6,7 @@ const { requireAuth, requireAdmin } = require('../middleware/auth');
 // Login GET
 router.get('/login', (req, res) => {
     if (req.session && req.session.user) {
-        return res.redirect('/dashboard');
+        return res.redirect('/admin');
     }
     res.render('login', { title: 'Login' });
 });
