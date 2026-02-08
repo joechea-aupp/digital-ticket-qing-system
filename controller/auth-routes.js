@@ -34,6 +34,9 @@ router.post('/login', async (req, res) => {
 
         // Create session
         req.session.user = user;
+        if(user.role === 'admin') {
+            return res.redirect('/admin');
+        }
         res.redirect('/dashboard');
     } catch (error) {
         console.error('Login error:', error);
