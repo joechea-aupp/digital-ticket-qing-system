@@ -141,9 +141,25 @@ router.post("/station/:id/next-ticket", requireAuth, (req, res) => {
         });
     }
     
-    agent.isPaused = false;
-    agent.previousTicket = agent.currentTicket;
-    agent.currentTicket = state.ticketQueue.shift();
+    // Check if agent has a topic assigned
+    if (agent.topicId) {
+        // Find the next ticket with matching topic
+        const ticketIndex = state.ticketQueue.findIndex(t => t.topicId === agent.topicId);
+        if (ticketIndex === -1) {
+            return res.status(400).json({
+                success: false,
+                error: `No tickets available for topic "${agent.topicName || 'Topic ' + agent.topicId}"`
+            });
+        }
+        agent.isPaused = false;
+        agent.previousTicket = agent.currentTicket;
+        agent.currentTicket = state.ticketQueue.splice(ticketIndex, 1)[0];
+    } else {
+        // No topic assigned, get any ticket from queue
+        agent.isPaused = false;
+        agent.previousTicket = agent.currentTicket;
+        agent.currentTicket = state.ticketQueue.shift();
+    }
     
     // Broadcast to all connected clients
     if (setupSockets.stateManager.broadcastAll) {

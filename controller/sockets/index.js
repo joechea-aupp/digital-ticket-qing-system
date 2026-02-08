@@ -336,10 +336,26 @@ const setupSockets = (wss, serverState) => {
                     }
                     
                     if (ticketQueue.length > 0) {
-                        // Get the next ticket from queue (regardless of topic)
-                        agent.isPaused = false;
-                        agent.previousTicket = agent.currentTicket;
-                        agent.currentTicket = ticketQueue.shift();
+                        // Check if agent has a topic assigned
+                        if (agent.topicId) {
+                            // Find the next ticket with matching topic
+                            const ticketIndex = ticketQueue.findIndex(t => t.topicId === agent.topicId);
+                            if (ticketIndex === -1) {
+                                ws.send(JSON.stringify({ 
+                                    success: false, 
+                                    error: `No tickets available for topic "${agent.topicName || 'Topic ' + agent.topicId}"` 
+                                }));
+                                return;
+                            }
+                            agent.isPaused = false;
+                            agent.previousTicket = agent.currentTicket;
+                            agent.currentTicket = ticketQueue.splice(ticketIndex, 1)[0];
+                        } else {
+                            // No topic assigned, get any ticket from queue
+                            agent.isPaused = false;
+                            agent.previousTicket = agent.currentTicket;
+                            agent.currentTicket = ticketQueue.shift();
+                        }
                         broadcastAll();
                     } else {
                         ws.send(JSON.stringify({ 
