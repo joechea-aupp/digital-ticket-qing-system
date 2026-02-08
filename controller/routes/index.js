@@ -11,8 +11,37 @@ router.get("/health", (req, res) => {
     res.status(200).json({ status: "ok" })
 })
 
-router.get("/", (req, res) => {
-    res.render("get-ticket", { title: "Get Your Ticket" })
+router.get("/", async (req, res) => {
+    try {
+        const topicModule = require('../../db/topic');
+        const defaultTopic = await topicModule.getDefaultTopic();
+        res.render("get-ticket", { title: "Get Your Ticket", topic: defaultTopic || null })
+    } catch (error) {
+        console.error('Error fetching default topic:', error);
+        res.render("get-ticket", { title: "Get Your Ticket", topic: null })
+    }
+})
+
+router.get("/get-ticket/:topicPrefix", async (req, res) => {
+    try {
+        const topicModule = require('../../db/topic');
+        const topic = await topicModule.getTopicByPrefix(req.params.topicPrefix);
+        
+        if (!topic) {
+            return res.status(404).render("error", { 
+                title: "Topic Not Found",
+                message: `Topic with prefix '${req.params.topicPrefix}' not found`
+            });
+        }
+        
+        res.render("get-ticket", { title: "Get Your Ticket", topic: topic })
+    } catch (error) {
+        console.error('Error fetching topic:', error);
+        return res.status(500).render("error", { 
+            title: "Error",
+            message: "Failed to fetch topic"
+        });
+    }
 })
 
 router.get("/get-ticket", (req, res) => {
@@ -27,8 +56,21 @@ router.get("/stations", requireAgentOrAdmin, (req, res) => {
     res.render("stations", { title: "Manage Stations" })
 })
 
-router.get("/admin", requireAdmin, (req, res) => {
-    res.render("admin", { title: "Admin Panel - Ticket Queue" })
+router.get("/admin", requireAdmin, async (req, res) => {
+    try {
+        const topicModule = require('../../db/topic');
+        const topics = await topicModule.getAllTopics();
+        res.render("admin", { 
+            title: "Admin Panel - Ticket Queue",
+            topics: topics 
+        })
+    } catch (error) {
+        console.error('Error fetching topics:', error);
+        res.render("admin", { 
+            title: "Admin Panel - Ticket Queue",
+            topics: [] 
+        })
+    }
 })
 
 // Station UI route
@@ -72,10 +114,23 @@ router.get("/station/:id", requireAuth, (req, res) => {
         });
     }
     
+    // Check if there are tickets available for this station
+    let hasAvailableTickets = false;
+    if (state.ticketQueue.length > 0) {
+        if (station.topicId) {
+            // Check if there are tickets for this specific topic
+            hasAvailableTickets = state.ticketQueue.some(t => t.topicId === station.topicId);
+        } else {
+            // No topic assigned, can serve any ticket
+            hasAvailableTickets = true;
+        }
+    }
+    
     res.json({
         success: true,
         station: station,
-        queueRemaining: state.ticketQueue.length
+        queueRemaining: state.ticketQueue.length,
+        hasAvailableTickets: hasAvailableTickets
     });
 });
 
@@ -99,9 +154,25 @@ router.post("/station/:id/next-ticket", requireAuth, (req, res) => {
         });
     }
     
-    agent.isPaused = false;
-    agent.previousTicket = agent.currentTicket;
-    agent.currentTicket = state.ticketQueue.shift();
+    // Check if agent has a topic assigned
+    if (agent.topicId) {
+        // Find the next ticket with matching topic
+        const ticketIndex = state.ticketQueue.findIndex(t => t.topicId === agent.topicId);
+        if (ticketIndex === -1) {
+            return res.status(400).json({
+                success: false,
+                error: `No tickets available for topic "${agent.topicName || 'Topic ' + agent.topicId}"`
+            });
+        }
+        agent.isPaused = false;
+        agent.previousTicket = agent.currentTicket;
+        agent.currentTicket = state.ticketQueue.splice(ticketIndex, 1)[0];
+    } else {
+        // No topic assigned, get any ticket from queue
+        agent.isPaused = false;
+        agent.previousTicket = agent.currentTicket;
+        agent.currentTicket = state.ticketQueue.shift();
+    }
     
     // Broadcast to all connected clients
     if (setupSockets.stateManager.broadcastAll) {

@@ -5,9 +5,11 @@
             sidebarSubtitle="Manage your queue"
             showQueue=true
             showDashboard=true
+            showTopic=true
             showStations=true
             queueClass="bg-emerald-100 text-emerald-700 font-medium text-sm transition"
             dashboardClass="text-slate-600 hover:bg-slate-100 font-medium text-sm transition"
+                        topicClass="text-slate-600 hover:bg-slate-100 font-medium text-sm transition"
             stationsClass="text-slate-600 hover:bg-slate-100 font-medium text-sm transition"
         }}
 
@@ -98,6 +100,15 @@
                 <label for="agentName" class="text-sm font-semibold text-slate-600">Counter Name</label>
                 <input type="text" id="agentName" placeholder="e.g., Counter 1, Window A" class="mt-2 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-800 placeholder:text-slate-400 focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-200" />
             </div>
+            <div class="mt-5">
+                <label for="agentTopic" class="text-sm font-semibold text-slate-600">Associated Topic</label>
+                <select id="agentTopic" class="mt-2 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-800 focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-200">
+                    <option value="">-- Select a topic --</option>
+                    {{#each topics}}
+                    <option value="{{this.id}}">{{this.name}} ({{this.prefix_id}})</option>
+                    {{/each}}
+                </select>
+            </div>
             <div class="mt-6 flex items-center justify-end gap-3">
                 <button class="rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-600 transition hover:bg-slate-50" onclick="closeModal()">Cancel</button>
                 <button class="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-emerald-700" onclick="addAgent()">Add Counter</button>
@@ -187,6 +198,7 @@
                             <thead class="bg-slate-900 text-white">
                                 <tr>
                                     <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide">Name</th>
+                                    <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide">Topic</th>
                                     <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide">Serving</th>
                                     <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide">Customer</th>
                                     <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide">Status</th>
@@ -198,8 +210,11 @@
                                     <tr class="hover:bg-slate-50">
                                         <td class="px-4 py-3 font-semibold text-slate-800">${agent.name}</td>
                                         <td class="px-4 py-3">
+                                            ${agent.topicId ? `<span class="text-xs font-semibold text-sky-600 bg-sky-50 px-2 py-1 rounded">${agent.topicName || 'Topic ' + agent.topicId}</span>` : '<span class="text-slate-400 italic">No topic</span>'}
+                                        </td>
+                                        <td class="px-4 py-3">
                                             ${agent.currentTicket ? `
-                                                <span class="inline-flex items-center rounded-md bg-slate-900 px-2 py-0.5 text-xs font-semibold text-white">#${agent.currentTicket.id}</span>
+                                                <span class="inline-flex items-center rounded-md bg-slate-900 px-2 py-0.5 text-xs font-semibold text-white">${agent.currentTicket.id}</span>
                                             ` : `
                                                 <span class="text-slate-400 italic">No ticket</span>
                                             `}
@@ -213,7 +228,7 @@
                                             `}
                                         </td>
                                         <td class="px-4 py-3">
-                                            <button class="action-btn rounded-md bg-slate-700 px-3 py-1.5 text-xs font-semibold text-white shadow-sm transition hover:bg-slate-800" data-agent-id="${agent.id}" data-queue-length="${queue.length}" data-has-ticket="${agent.currentTicket ? 'true' : 'false'}" data-is-paused="${agent.isPaused ? 'true' : 'false'}">
+                                            <button class="action-btn rounded-md bg-slate-700 px-3 py-1.5 text-xs font-semibold text-white shadow-sm transition hover:bg-slate-800" data-agent-id="${agent.id}" data-queue-length="${queue.length}" data-has-ticket="${agent.currentTicket ? 'true' : 'false'}" data-is-paused="${agent.isPaused ? 'true' : 'false'}" data-topic-id="${agent.topicId || ''}" data-has-available-tickets="${agent.topicId ? (queue.some(t => t.topicId === agent.topicId) ? 'true' : 'false') : (queue.length > 0 ? 'true' : 'false')}">
                                                 Actions
                                                 <span class="ml-1.5 inline-block text-xs">▼</span>
                                             </button>
@@ -237,7 +252,7 @@
                 queueListEl.innerHTML = queue.map((ticket) => `
                     <div class="flex items-start justify-between rounded-xl border border-slate-100 bg-white px-4 py-3 shadow-sm">
                         <div>
-                            <div class="text-sm font-semibold text-emerald-600">Ticket #${ticket.id}</div>
+                            <div class="text-sm font-semibold text-emerald-600">Ticket ${ticket.id}</div>
                             <div class="text-base font-medium text-slate-800">${ticket.name}</div>
                             <div class="text-xs text-slate-400">${new Date(ticket.time).toLocaleString()}</div>
                         </div>
@@ -263,14 +278,22 @@
             modal.classList.remove('flex');
             modal.setAttribute('aria-hidden', 'true');
             document.getElementById('agentName').value = '';
+            document.getElementById('agentTopic').value = '';
         }
 
         function addAgent() {
             const agentNameInput = document.getElementById('agentName');
+            const agentTopicInput = document.getElementById('agentTopic');
             const agentName = agentNameInput.value.trim();
+            const topicId = agentTopicInput.value.trim();
 
             if (!agentName) {
                 showError('Please enter a counter name');
+                return;
+            }
+
+            if (!topicId) {
+                showError('Please select an associated topic');
                 return;
             }
 
@@ -279,12 +302,19 @@
                 return;
             }
 
+            // Get the topic name from the selected option
+            const selectedOption = agentTopicInput.options[agentTopicInput.selectedIndex];
+            const topicName = selectedOption.text.split(' (')[0]; // Extract name before the prefix
+
             ws.send(JSON.stringify({
                 action: 'addAgent',
-                agentName: agentName
+                agentName: agentName,
+                topicId: parseInt(topicId),
+                topicName: topicName
             }));
 
             agentNameInput.value = '';
+            agentTopicInput.value = '';
             closeModal();
         }
 
@@ -299,6 +329,7 @@
                 const queueLength = parseInt(button.dataset.queueLength);
                 const hasTicket = button.dataset.hasTicket === 'true';
                 const isPaused = button.dataset.isPaused === 'true';
+                const hasAvailableTickets = button.dataset.hasAvailableTickets === 'true';
                 
                 const rect = button.getBoundingClientRect();
                 const menuContainer = document.getElementById('actionMenuContainer');
@@ -309,7 +340,7 @@
                 menu.style.right = (window.innerWidth - rect.right) + 'px';
                 
                 menu.innerHTML = `
-                    <button class="w-full px-4 py-2.5 text-left text-xs font-semibold text-emerald-600 transition hover:bg-emerald-50 disabled:text-slate-300 disabled:hover:bg-white ${queueLength === 0 ? 'opacity-50 cursor-not-allowed' : ''}" onclick="nextTicket(${agentId}); closeAllMenus()" ${queueLength === 0 ? 'disabled' : ''}>
+                    <button class="w-full px-4 py-2.5 text-left text-xs font-semibold text-emerald-600 transition hover:bg-emerald-50 disabled:text-slate-300 disabled:hover:bg-white ${!hasAvailableTickets ? 'opacity-50 cursor-not-allowed' : ''}" onclick="nextTicket(${agentId}); closeAllMenus()" ${!hasAvailableTickets ? 'disabled' : ''}>
                         ✓ Next Ticket
                     </button>
                     <button class="w-full px-4 py-2.5 text-left text-xs font-semibold text-sky-600 transition hover:bg-sky-50" onclick="togglePause(${agentId}, ${!isPaused}); closeAllMenus()">

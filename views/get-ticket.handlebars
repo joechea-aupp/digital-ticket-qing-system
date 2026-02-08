@@ -9,6 +9,11 @@
             <header class="text-center">
                 <p class="text-xs font-semibold uppercase tracking-[0.3em] text-emerald-500">Welcome</p>
                 <h1 class="mt-2 text-3xl font-semibold text-slate-900">Get Your Ticket</h1>
+                {{#if topic}}
+                    <div class="mt-3 inline-block rounded-lg bg-slate-100 px-3 py-1">
+                        <span class="text-xs font-medium text-slate-600">{{topic.name}}</span>
+                    </div>
+                {{/if}}
                 <p class="mt-2 text-sm text-slate-500">Join the live queue and track your turn.</p>
             </header>
 
@@ -65,6 +70,7 @@
         let currentServingTicketId = null;
         let agents = [];
         let lastServedTicketId = null;
+        let currentTopic = {{#if topic}}{{{json topic}}}{{else}}null{{/if}};
 
         const connectedClasses = ["bg-emerald-500", "animate-pulse"];
         const disconnectedClasses = ["bg-rose-500"];
@@ -219,22 +225,37 @@
                 return;
             }
 
-            // Find the highest ticket number being served across all agents
-            let highestServingTicketId = null;
+            // Find the highest ticket number being served across all agents (within same topic)
+            let highestServingNumericId = null;
             if (window.servedTicketIds && window.servedTicketIds.length > 0) {
-                highestServingTicketId = Math.max(...window.servedTicketIds);
+                // Filter served tickets by same topic as my ticket
+                const sameTopicServedIds = agents
+                    .filter(agent => agent.currentTicket && agent.currentTicket.topicId === myTicket.topicId)
+                    .map(agent => agent.currentTicket.numericId)
+                    .filter(id => id !== undefined);
+                
+                if (sameTopicServedIds.length > 0) {
+                    highestServingNumericId = Math.max(...sameTopicServedIds);
+                }
             }
 
-            if (highestServingTicketId === null) {
-                if (lastServedTicketId !== null && myTicket.id < lastServedTicketId) {
-                    setTicketsRemainingDisplay({
-                        value: 'Expired',
-                        className: 'mt-2 text-2xl font-semibold text-slate-300',
-                        text: 'Your ticket has passed. Please contact the counter.'
-                    });
-                    setTicketCardExpired(true);
-                    container.classList.remove('hidden');
-                    return;
+            if (highestServingNumericId === null) {
+                if (lastServedTicketId !== null) {
+                    // Find the numeric ID of the last served ticket if it's in the same topic
+                    const lastServedNumericId = agents
+                        .filter(agent => agent.previousTicket && agent.previousTicket.displayId === lastServedTicketId && agent.previousTicket.topicId === myTicket.topicId)
+                        .map(agent => agent.previousTicket.numericId)[0];
+                    
+                    if (lastServedNumericId && myTicket.numericId < lastServedNumericId) {
+                        setTicketsRemainingDisplay({
+                            value: 'Expired',
+                            className: 'mt-2 text-2xl font-semibold text-slate-300',
+                            text: 'Your ticket has passed. Please contact the counter.'
+                        });
+                        setTicketCardExpired(true);
+                        container.classList.remove('hidden');
+                        return;
+                    }
                 }
                 setTicketsRemainingDisplay({
                     value: '',
@@ -247,7 +268,7 @@
                 return;
             }
 
-            const ticketsRemaining = myTicket.id - highestServingTicketId;
+            const ticketsRemaining = myTicket.numericId - highestServingNumericId;
 
             if (ticketsRemaining === 0) {
                 // Your ticket is the highest being served (it's your turn!)
@@ -260,7 +281,7 @@
                 setTicketCardYourTurn(true);
                 document.getElementById('ticketNumber').classList.remove('line-through');
                 container.classList.remove('hidden');
-            } else if (ticketsRemaining < 0 || (lastServedTicketId !== null && myTicket.id < lastServedTicketId)) {
+            } else if (ticketsRemaining < 0) {
                 setTicketsRemainingDisplay({
                     value: 'Expired',
                     className: 'mt-2 text-2xl font-semibold text-slate-300',
@@ -341,7 +362,8 @@
 
             ws.send(JSON.stringify({
                 action: 'getTicket',
-                name: name
+                name: name,
+                topic: currentTopic
             }));
         }
 

@@ -65,32 +65,85 @@
 </div>
 
 <!-- Create/Edit User Modal -->
-<div id="userModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-    <div class="bg-white rounded-lg p-8 max-w-md w-full">
-        <h2 id="modalTitle" class="text-2xl font-bold mb-4">Create New User</h2>
-        <div id="modalError" class="hidden bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4"></div>
-        <form id="userForm">
-            <div class="mb-4">
-                <label class="block text-gray-700 text-sm font-bold mb-2">Username</label>
-                <input type="text" id="username" required class="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:border-indigo-500">
-            </div>
-            <div id="passwordField" class="mb-4">
-                <label class="block text-gray-700 text-sm font-bold mb-2">Password</label>
-                <input type="password" id="password" required class="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:border-indigo-500">
-            </div>
-            <div class="mb-6">
-                <label class="block text-gray-700 text-sm font-bold mb-2">Role</label>
-                <select id="role" required class="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:border-indigo-500">
-                    <option value="">Select a role</option>
-                    <option value="admin">Admin</option>
-                    <option value="agent">Agent</option>
-                </select>
-            </div>
-            <div class="flex gap-2">
-                <button type="submit" id="submitBtn" class="flex-1 bg-indigo-500 hover:bg-indigo-600 text-white px-4 py-2 rounded">Create User</button>
-                <button type="button" class="flex-1 bg-gray-400 hover:bg-gray-500 text-white px-4 py-2 rounded" onclick="closeUserModal()">Cancel</button>
-            </div>
-        </form>
+<div id="userModal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-sm">
+    <div class="w-full max-w-md rounded-2xl bg-white shadow-2xl ring-1 ring-slate-200/60">
+        <!-- Modal Header -->
+        <div class="border-b border-slate-200 px-8 py-6">
+            <h2 id="modalTitle" class="text-2xl font-bold tracking-tight text-slate-900">Create New User</h2>
+            <p class="mt-1 text-sm text-slate-500">Add a new admin or agent account</p>
+        </div>
+
+        <!-- Modal Content -->
+        <div class="px-8 py-6">
+            <div id="modalError" class="mb-4 hidden rounded-lg border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700"></div>
+
+            <form id="userForm" class="space-y-5">
+                <!-- Username Field -->
+                <div>
+                    <label for="username" class="block text-sm font-semibold text-slate-700 mb-2">
+                        Username
+                        <span class="text-rose-500">*</span>
+                    </label>
+                    <input 
+                        type="text" 
+                        id="username" 
+                        required 
+                        placeholder="Enter username" 
+                        class="w-full px-4 py-2.5 rounded-lg border border-slate-300 bg-slate-50 text-slate-900 placeholder-slate-400 transition focus:border-emerald-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
+                    >
+                </div>
+
+                <!-- Password Field -->
+                <div id="passwordField">
+                    <label for="password" class="block text-sm font-semibold text-slate-700 mb-2">
+                        Password
+                        <span class="text-rose-500">*</span>
+                    </label>
+                    <input 
+                        type="password" 
+                        id="password" 
+                        required 
+                        placeholder="Enter password" 
+                        class="w-full px-4 py-2.5 rounded-lg border border-slate-300 bg-slate-50 text-slate-900 placeholder-slate-400 transition focus:border-emerald-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
+                    >
+                </div>
+
+                <!-- Role Field -->
+                <div>
+                    <label for="role" class="block text-sm font-semibold text-slate-700 mb-2">
+                        Role
+                        <span class="text-rose-500">*</span>
+                    </label>
+                    <select 
+                        id="role" 
+                        required 
+                        class="w-full px-4 py-2.5 rounded-lg border border-slate-300 bg-slate-50 text-slate-900 placeholder-slate-400 transition focus:border-emerald-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
+                    >
+                        <option value="">Select a role</option>
+                        <option value="admin">Admin</option>
+                        <option value="agent">Agent</option>
+                    </select>
+                </div>
+            </form>
+        </div>
+
+        <!-- Modal Footer -->
+        <div class="border-t border-slate-200 px-8 py-4 flex gap-3 bg-slate-50/50">
+            <button 
+                type="button" 
+                onclick="closeUserModal()" 
+                class="flex-1 rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-slate-500/20"
+            >
+                Cancel
+            </button>
+            <button 
+                type="button" 
+                id="submitBtn" 
+                class="flex-1 rounded-lg bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-emerald-500/50"
+            >
+                Create User
+            </button>
+        </div>
     </div>
 </div>
 
@@ -102,6 +155,7 @@
     function showCreateUserModal() {
         editingUserId = null;
         document.getElementById('modalTitle').textContent = 'Create New User';
+        document.getElementById('modalTitle').nextElementSibling.textContent = 'Add a new admin or agent account';
         document.getElementById('submitBtn').textContent = 'Create User';
         document.getElementById('passwordField').style.display = 'block';
         document.getElementById('password').required = true;
@@ -124,6 +178,7 @@
             
             editingUserId = userId;
             document.getElementById('modalTitle').textContent = 'Edit User';
+            document.getElementById('modalTitle').nextElementSibling.textContent = 'Update user account information';
             document.getElementById('submitBtn').textContent = 'Update User';
             document.getElementById('passwordField').style.display = 'none';
             document.getElementById('password').required = false;
@@ -159,10 +214,10 @@
         }
     }
 
-    document.getElementById('userForm').addEventListener('submit', async (e) => {
+    document.getElementById('submitBtn').addEventListener('click', async (e) => {
         e.preventDefault();
-        const username = document.getElementById('username').value;
-        const password = document.getElementById('password').value;
+        const username = document.getElementById('username').value.trim();
+        const password = document.getElementById('password').value.trim();
         const role = document.getElementById('role').value;
         const errorDiv = document.getElementById('modalError');
 
@@ -202,10 +257,17 @@
 
     function showMessage(message, type) {
         const container = document.getElementById('messageContainer');
-        const bgColor = type === 'success' ? 'bg-green-100' : 'bg-red-100';
-        const textColor = type === 'success' ? 'text-green-700' : 'text-red-700';
-        const borderColor = type === 'success' ? 'border-green-400' : 'border-red-400';
+        const bgColor = type === 'success' ? 'bg-emerald-100' : 'bg-rose-100';
+        const textColor = type === 'success' ? 'text-emerald-700' : 'text-rose-700';
+        const borderColor = type === 'success' ? 'border-emerald-200' : 'border-rose-200';
         
-        container.innerHTML = `<div class="${bgColor} border ${borderColor} ${textColor} px-4 py-3 rounded mb-4">${message}</div>`;
+        container.innerHTML = `<div class="rounded-lg border ${borderColor} ${bgColor} px-4 py-3 ${textColor}">${message}</div>`;
     }
+
+    // Close modal when clicking outside
+    document.getElementById('userModal').addEventListener('click', (e) => {
+        if (e.target === document.getElementById('userModal')) {
+            closeUserModal();
+        }
+    });
 </script>

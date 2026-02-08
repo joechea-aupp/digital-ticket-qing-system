@@ -7,8 +7,11 @@ const { engine } = require("express-handlebars")
 const { v4: uuidv4 } = require("uuid")
 const routes = require("./controller/routes")
 const authRoutes = require("./controller/auth-routes")
+const topicsRoutes = require("./controller/topics-routes")
 const setupSockets = require("./controller/sockets")
 const cookieParser = require("cookie-parser")
+
+require('dotenv').config()
 
 const app = express()
 const server = createServer(app)
@@ -39,6 +42,9 @@ app.engine("handlebars", engine({
                 hour: '2-digit',
                 minute: '2-digit'
             });
+        },
+        json: function(obj) {
+            return JSON.stringify(obj);
         }
     }
 }))
@@ -50,6 +56,7 @@ app.use(express.urlencoded({ extended: true }))
 app.use(express.static("public"))
 app.use(cookieParser())
 
+const port = process.env.PORT || 8080
 // Session middleware
 const sessionConfig = {
     secret: process.env.SESSION_SECRET || 'your-secret-key-change-in-production',
@@ -60,14 +67,19 @@ const sessionConfig = {
 const sessionMiddleware = session(sessionConfig)
 app.use(sessionMiddleware)
 
-// Make user available in all templates
+// Make user and baseUrl available in all templates
 app.use((req, res, next) => {
     res.locals.user = req.session && req.session.user ? req.session.user : null;
+    // Set baseUrl from .env or fallback to localhost:port
+    res.locals.baseUrl = process.env.URL || `http://localhost:${port}`;
     next();
 });
 
 // Use auth routes first
 app.use(authRoutes)
+
+// Use topic routes
+app.use(topicsRoutes)
 
 // Use other routes
 app.use(routes)
@@ -159,6 +171,6 @@ server.on("upgrade", (request, socket, head) => {
     }
 })
 
-server.listen(8080, () => {
-    console.log("http://localhost:8080")
+server.listen(port, () => {
+    console.log(`http://localhost:${port}`)
 })
