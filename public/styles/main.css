@@ -1705,7 +1705,7 @@
     background: #ffffff;
   }
   .your-turn-text {
-    background: linear-gradient(135deg, #F9EDA6 0%, #F4D03F 35%, #E5A52A 70%, #C77A00 100%);
+    background: linear-gradient(135deg, #F4E590 0%, #E5BC2A 35%, #D99420 70%, #B36800 100%);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
