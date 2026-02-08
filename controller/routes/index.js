@@ -15,7 +15,7 @@ router.get("/", (req, res) => {
 })
 
 router.get("/ticket-queue", (req, res) => {
-    res.render("ticket-queue", { title: "Ticket Queue Display" })
+    res.render("ticket-queue", { title: "Ticket Queue Display", layout: false })
 })
 
 router.get("/get-ticket", (req, res) => {
