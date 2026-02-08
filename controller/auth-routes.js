@@ -7,20 +7,27 @@ const { v4: uuidv4 } = require('uuid');
 // Login GET
 router.get('/login', (req, res) => {
     if (req.session && req.session.user) {
-        return res.redirect('/admin');
+        // If already logged in, redirect to returnUrl or admin/dashboard
+        const returnUrl = req.query.returnUrl || (req.session.user.role === 'admin' ? '/admin' : '/dashboard');
+        return res.redirect(returnUrl);
     }
-    res.render('login', { title: 'Login' });
+    // Pass returnUrl to the login page so it can be preserved on form submit
+    res.render('login', { 
+        title: 'Login',
+        returnUrl: req.query.returnUrl || ''
+    });
 });
 
 // Login POST
 router.post('/login', async (req, res) => {
     try {
-        const { username, password } = req.body;
+        const { username, password, returnUrl } = req.body;
 
         if (!username || !password) {
             return res.status(400).render('login', {
                 title: 'Login',
-                error: 'Username and password are required'
+                error: 'Username and password are required',
+                returnUrl: returnUrl || ''
             });
         }
 
@@ -29,12 +36,19 @@ router.post('/login', async (req, res) => {
         if (!user) {
             return res.status(401).render('login', {
                 title: 'Login',
-                error: 'Invalid username or password'
+                error: 'Invalid username or password',
+                returnUrl: returnUrl || ''
             });
         }
 
         // Create session
         req.session.user = user;
+        
+        // Redirect to returnUrl if provided, otherwise to default page based on role
+        if (returnUrl && returnUrl.trim() !== '') {
+            return res.redirect(returnUrl);
+        }
+        
         if(user.role === 'admin') {
             return res.redirect('/admin');
         }
@@ -43,7 +57,8 @@ router.post('/login', async (req, res) => {
         console.error('Login error:', error);
         res.status(500).render('login', {
             title: 'Login',
-            error: 'An error occurred during login'
+            error: 'An error occurred during login',
+            returnUrl: req.body.returnUrl || ''
         });
     }
 });
