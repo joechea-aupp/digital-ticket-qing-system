@@ -11,15 +11,15 @@ router.get("/health", (req, res) => {
 })
 
 router.get("/", (req, res) => {
-    res.render("index", { title: "WebSocket Server" })
+    res.render("get-ticket", { title: "Get Your Ticket" })
+})
+
+router.get("/get-ticket", (req, res) => {
+    res.redirect("/")
 })
 
 router.get("/ticket-queue", (req, res) => {
     res.render("ticket-queue", { title: "Ticket Queue Display" })
-})
-
-router.get("/get-ticket", (req, res) => {
-    res.render("get-ticket", { title: "Get Your Ticket" })
 })
 
 router.get("/stations", (req, res) => {

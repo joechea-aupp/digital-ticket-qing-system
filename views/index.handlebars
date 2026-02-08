@@ -4,114 +4,74 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{title}}</title>
-    <style>
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 20px;
-        }
-        .container {
-            background-color: white;
-            padding: 40px;
-            border-radius: 12px;
-            box-shadow: 0 10px 40px rgba(0,0,0,0.3);
-            max-width: 600px;
-            width: 100%;
-        }
-        h1 {
-            color: #333;
-            margin-bottom: 20px;
-            text-align: center;
-        }
-        p {
-            color: #666;
-            margin-bottom: 30px;
-            text-align: center;
-            line-height: 1.6;
-        }
-        .status {
-            padding: 15px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            border-radius: 8px;
-            margin: 20px 0;
-            text-align: center;
-        }
-        h2 {
-            color: #333;
-            margin: 30px 0 15px;
-            font-size: 1.3em;
-        }
-        .pages {
-            list-style: none;
-        }
-        .pages li {
-            margin: 12px 0;
-        }
-        .pages a {
-            display: block;
-            padding: 15px 20px;
-            background-color: #f5f5f5;
-            color: #333;
-            text-decoration: none;
-            border-radius: 6px;
-            border-left: 4px solid #667eea;
-            transition: all 0.3s;
-        }
-        .pages a:hover {
-            background-color: #667eea;
-            color: white;
-            transform: translateX(5px);
-        }
-        .page-title {
-            font-weight: 600;
-            display: block;
-            margin-bottom: 5px;
-        }
-        .page-desc {
-            font-size: 0.9em;
-            opacity: 0.8;
-        }
-    </style>
+    <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body>
-    <div class="container">
-        <h1>{{title}}</h1>
-        <p>Ticket Queue Management System with WebSocket real-time updates</p>
-        <div class="status">
-            <p><strong>Status:</strong> Server is running ✓</p>
+<body class="min-h-screen bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 flex items-center justify-center p-4">
+    <div class="w-full max-w-2xl">
+        <!-- Header -->
+        <div class="text-center mb-12">
+            <h1 class="text-5xl font-bold text-white mb-3">{{title}}</h1>
+            <p class="text-lg text-indigo-100">Ticket Queue Management System with WebSocket real-time updates</p>
         </div>
-        <h2>Available Pages:</h2>
-        <ul class="pages">
-            <li>
-                <a href="/get-ticket">
-                    <span class="page-title">Get a Ticket</span>
-                    <span class="page-desc">For customers to get their queue ticket</span>
-                </a>
-            </li>
-            <li>
-                <a href="/ticket-queue">
-                    <span class="page-title">Ticket Queue Display</span>
-                    <span class="page-desc">View current ticket being served and queue status</span>
-                </a>
-            </li>
-            <li>
-                <a href="/stations">
-                    <span class="page-title">Manage Stations</span>
-                    <span class="page-desc">View and manage individual station tickets</span>
-                </a>
-            </li>
-            <li>
-                <a href="/admin">
-                    <span class="page-title">Admin Panel</span>
-                    <span class="page-desc">Manage queue and proceed to next tickets</span>
-                </a>
-            </li>
-        </ul>
+
+        <!-- Main Card -->
+        <div class="bg-white rounded-2xl shadow-2xl overflow-hidden">
+            <!-- Status Banner -->
+            <div class="bg-gradient-to-r from-emerald-500 to-teal-500 px-8 py-6 text-center">
+                <div class="inline-flex items-center gap-2 text-white text-lg font-semibold">
+                    <span class="inline-block w-3 h-3 bg-white rounded-full animate-pulse"></span>
+                    Server is running
+                </div>
+            </div>
+
+            <!-- Content -->
+            <div class="p-8">
+                <h2 class="text-2xl font-bold text-gray-800 mb-8">Available Pages:</h2>
+                
+                <div class="space-y-4">
+                    <!-- Get a Ticket -->
+                    <a href="/get-ticket" class="group block p-6 bg-gradient-to-br from-indigo-50 to-blue-50 rounded-xl border-2 border-indigo-200 hover:border-indigo-500 hover:shadow-lg transition-all duration-300 no-underline">
+                        <div class="flex items-start justify-between mb-2">
+                            <span class="text-lg font-bold text-gray-800 group-hover:text-indigo-600 transition-colors">Get a Ticket</span>
+                            <span class="w-8 h-8 bg-indigo-500 text-white rounded-lg flex items-center justify-center text-sm font-bold">🎫</span>
+                        </div>
+                        <p class="text-gray-600 text-sm">For customers to get their queue ticket</p>
+                    </a>
+
+                    <!-- Ticket Queue Display -->
+                    <a href="/ticket-queue" class="group block p-6 bg-gradient-to-br from-emerald-50 to-teal-50 rounded-xl border-2 border-emerald-200 hover:border-emerald-500 hover:shadow-lg transition-all duration-300 no-underline">
+                        <div class="flex items-start justify-between mb-2">
+                            <span class="text-lg font-bold text-gray-800 group-hover:text-emerald-600 transition-colors">Ticket Queue Display</span>
+                            <span class="w-8 h-8 bg-emerald-500 text-white rounded-lg flex items-center justify-center text-sm font-bold">📊</span>
+                        </div>
+                        <p class="text-gray-600 text-sm">View current ticket being served and queue status</p>
+                    </a>
+
+                    <!-- Manage Stations -->
+                    <a href="/stations" class="group block p-6 bg-gradient-to-br from-blue-50 to-cyan-50 rounded-xl border-2 border-blue-200 hover:border-blue-500 hover:shadow-lg transition-all duration-300 no-underline">
+                        <div class="flex items-start justify-between mb-2">
+                            <span class="text-lg font-bold text-gray-800 group-hover:text-blue-600 transition-colors">Manage Stations</span>
+                            <span class="w-8 h-8 bg-blue-500 text-white rounded-lg flex items-center justify-center text-sm font-bold">🏪</span>
+                        </div>
+                        <p class="text-gray-600 text-sm">View and manage individual station tickets</p>
+                    </a>
+
+                    <!-- Admin Panel -->
+                    <a href="/admin" class="group block p-6 bg-gradient-to-br from-orange-50 to-red-50 rounded-xl border-2 border-orange-200 hover:border-orange-500 hover:shadow-lg transition-all duration-300 no-underline">
+                        <div class="flex items-start justify-between mb-2">
+                            <span class="text-lg font-bold text-gray-800 group-hover:text-orange-600 transition-colors">Admin Panel</span>
+                            <span class="w-8 h-8 bg-orange-500 text-white rounded-lg flex items-center justify-center text-sm font-bold">⚙️</span>
+                        </div>
+                        <p class="text-gray-600 text-sm">Manage queue and proceed to next tickets</p>
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="text-center mt-8 text-indigo-100 text-sm">
+            Real-time Queue Management System
+        </div>
     </div>
 </body>
 </html>
