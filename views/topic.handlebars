@@ -113,44 +113,100 @@
 </div>
 
 <!-- Topic Modal -->
-<div id="topicModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-    <div class="bg-white rounded-lg p-8 max-w-md w-full">
-        <h2 id="modalTitle" class="text-2xl font-bold mb-4">Add New Topic</h2>
-        <div id="modalError" class="hidden bg-rose-100 border border-rose-400 text-rose-700 px-4 py-3 rounded mb-4"></div>
-        
-        <form id="topicForm">
-            <input type="hidden" id="topicId" value="">
+<div id="topicModal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-sm">
+    <div class="w-full max-w-md rounded-2xl bg-white shadow-2xl ring-1 ring-slate-200/60">
+        <!-- Modal Header -->
+        <div class="border-b border-slate-200 px-8 py-6">
+            <h2 id="modalTitle" class="text-2xl font-bold tracking-tight text-slate-900">Add New Topic</h2>
+            <p class="mt-1 text-sm text-slate-500">Create a new topic for organizing tickets</p>
+        </div>
+
+        <!-- Modal Content -->
+        <div class="px-8 py-6">
+            <div id="modalError" class="mb-4 hidden rounded-lg border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700"></div>
             
-            <div class="mb-4">
-                <label class="block text-slate-700 text-sm font-semibold mb-2">Topic Name <span class="text-rose-600">*</span></label>
-                <input type="text" id="topicName" placeholder="e.g., General Inquiry" required class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent">
-                <p class="mt-1 text-xs text-slate-500">Unique name for this topic</p>
-            </div>
+            <form id="topicForm" class="space-y-5">
+                <input type="hidden" id="topicId" value="">
+                
+                <!-- Topic Name Field -->
+                <div>
+                    <label for="topicName" class="block text-sm font-semibold text-slate-700 mb-2">
+                        Topic Name
+                        <span class="text-rose-500">*</span>
+                    </label>
+                    <input 
+                        type="text" 
+                        id="topicName" 
+                        placeholder="e.g., General Inquiry" 
+                        required 
+                        class="w-full px-4 py-2.5 rounded-lg border border-slate-300 bg-slate-50 text-slate-900 placeholder-slate-400 transition focus:border-emerald-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
+                    >
+                    <p class="mt-1.5 text-xs text-slate-500">Unique name for this topic</p>
+                </div>
 
-            <div class="mb-4">
-                <label class="block text-slate-700 text-sm font-semibold mb-2">Prefix ID <span class="text-rose-600">*</span></label>
-                <input type="text" id="topicPrefixId" placeholder="e.g., GEN" required class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent uppercase">
-                <p class="mt-1 text-xs text-slate-500">Prefix for ticket numbers (e.g., GEN-001, GEN-002)</p>
-            </div>
+                <!-- Prefix ID Field -->
+                <div>
+                    <label for="topicPrefixId" class="block text-sm font-semibold text-slate-700 mb-2">
+                        Prefix ID
+                        <span class="text-rose-500">*</span>
+                    </label>
+                    <input 
+                        type="text" 
+                        id="topicPrefixId" 
+                        placeholder="e.g., GEN" 
+                        required 
+                        class="w-full px-4 py-2.5 rounded-lg border border-slate-300 bg-slate-50 text-slate-900 placeholder-slate-400 uppercase transition focus:border-emerald-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
+                    >
+                    <p class="mt-1.5 text-xs text-slate-500">Prefix for ticket numbers (e.g., GEN-001, GEN-002)</p>
+                </div>
 
-            <div class="mb-4">
-                <label class="block text-slate-700 text-sm font-semibold mb-2">Description</label>
-                <textarea id="topicDescription" rows="3" placeholder="Description for this topic" class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent"></textarea>
-            </div>
+                <!-- Description Field -->
+                <div>
+                    <label for="topicDescription" class="block text-sm font-semibold text-slate-700 mb-2">
+                        Description
+                    </label>
+                    <textarea 
+                        id="topicDescription" 
+                        rows="3" 
+                        placeholder="Describe the purpose of this topic" 
+                        class="w-full px-4 py-2.5 rounded-lg border border-slate-300 bg-slate-50 text-slate-900 placeholder-slate-400 resize-none transition focus:border-emerald-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
+                    ></textarea>
+                </div>
 
-            <div class="mb-6">
-                <label class="flex items-center gap-3 cursor-pointer">
-                    <input type="checkbox" id="topicIsDefault" class="w-4 h-4 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500">
-                    <span class="text-slate-700 text-sm font-semibold">Set as Default Topic</span>
-                </label>
-                <p class="mt-1 text-xs text-slate-500">Tickets will be assigned to this topic by default</p>
-            </div>
+                <!-- Default Topic Checkbox -->
+                <div class="rounded-lg border border-slate-200 bg-slate-50/50 p-4">
+                    <label class="flex items-center gap-3 cursor-pointer">
+                        <input 
+                            type="checkbox" 
+                            id="topicIsDefault" 
+                            class="h-4 w-4 rounded border-slate-300 text-emerald-600 transition focus:ring-2 focus:ring-emerald-500"
+                        >
+                        <div>
+                            <span class="block text-sm font-semibold text-slate-700">Set as Default Topic</span>
+                            <span class="block text-xs text-slate-500 mt-0.5">Tickets will be assigned to this topic by default</span>
+                        </div>
+                    </label>
+                </div>
+            </form>
+        </div>
 
-            <div class="flex gap-3">
-                <button type="button" id="submitBtn" class="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-lg font-semibold transition">Save Topic</button>
-                <button type="button" class="flex-1 bg-slate-400 hover:bg-slate-500 text-white px-4 py-2 rounded-lg font-semibold transition" onclick="closeTopicModal()">Cancel</button>
-            </div>
-        </form>
+        <!-- Modal Footer -->
+        <div class="border-t border-slate-200 px-8 py-4 flex gap-3 bg-slate-50/50">
+            <button 
+                type="button" 
+                onclick="closeTopicModal()" 
+                class="flex-1 rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-slate-500/20"
+            >
+                Cancel
+            </button>
+            <button 
+                type="button" 
+                id="submitBtn" 
+                class="flex-1 rounded-lg bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-emerald-500/50"
+            >
+                Save Topic
+            </button>
+        </div>
     </div>
 </div>
 
