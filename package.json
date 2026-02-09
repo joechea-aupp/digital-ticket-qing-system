@@ -4,6 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
+    "start": "node server.js",
     "dev": "nodemon --watch . --ext js,css server.js",
     "dev:css": "tailwindcss -i ./src/styles/tailwind.css -o ./public/styles/main.css --content \"./views/**/*.{handlebars,hbs}\" --watch",
     "build:css": "tailwindcss -i ./src/styles/tailwind.css -o ./public/styles/main.css --content \"./views/**/*.{handlebars,hbs}\" --minify",
