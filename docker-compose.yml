@@ -1,0 +1,19 @@
+services:
+  queue:
+    build: .
+    env_file: ./.env
+    volumes:
+      - ./db:/usr/src/app/db
+    # restart: always
+    entrypoint: ["/usr/src/app/docker_config/docker-entrypoint.sh"]
+
+
+  nginx:
+    image: nginx:alpine
+    ports:
+      - "8080:80"
+    volumes:
+      - ./docker_config/nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
+    depends_on:
+      - queue
+    # restart: always
