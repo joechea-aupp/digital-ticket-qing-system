@@ -48,11 +48,15 @@ router.post('/login', async (req, res) => {
         if (returnUrl && returnUrl.trim() !== '') {
             return res.redirect(returnUrl);
         }
-        
-        if(user.role === 'admin') {
-            return res.redirect('/admin');
+
+        switch(user.role) {
+            case 'admin':
+                return res.redirect('/admin');
+            case 'agent':
+                return res.redirect('/dashboard');
+            default:
+                return res.redirect('/dashboard');
         }
-        res.redirect('/dashboard');
     } catch (error) {
         console.error('Login error:', error);
         res.status(500).render('login', {

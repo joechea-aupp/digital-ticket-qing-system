@@ -120,7 +120,8 @@ router.get('/topic', requireAdmin, async (req, res) => {
         res.render('topic', {
             title: 'Topics',
             user: req.session.user,
-            topics: topics
+            topics: topics,
+            isAdmin: req.session.user.role === 'admin'
         });
     } catch (error) {
         console.error('Error fetching topics:', error);

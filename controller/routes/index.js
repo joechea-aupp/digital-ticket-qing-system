@@ -56,7 +56,10 @@ router.get("/ticket-queue",requireAgentOrAdmin, (req, res) => {
 })
 
 router.get("/stations", requireAgentOrAdmin, (req, res) => {
-    res.render("stations", { title: "Manage Stations" })
+    res.render("stations", { 
+        title: "Manage Stations",
+        isAdmin: req.session.user.role === 'admin'
+    })
 })
 
 router.get("/admin", requireAdmin, async (req, res) => {
@@ -65,13 +68,15 @@ router.get("/admin", requireAdmin, async (req, res) => {
         const topics = await topicModule.getAllTopics();
         res.render("admin", { 
             title: "Admin Panel - Ticket Queue",
-            topics: topics 
+            topics: topics,
+            isAdmin: req.session.user.role === 'admin'
         })
     } catch (error) {
         console.error('Error fetching topics:', error);
         res.render("admin", { 
             title: "Admin Panel - Ticket Queue",
-            topics: [] 
+            topics: [],
+            isAdmin: req.session.user.role === 'admin',
         })
     }
 })
