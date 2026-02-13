@@ -341,7 +341,35 @@
                     return;
                 }
 
-                tbody.innerHTML = data.agents.map(agent => `
+                // Group by agent name
+                const groupedAgents = data.agents.reduce((acc, agent) => {
+                    const name = agent.agent_name || 'Unknown';
+                    if (!acc[name]) {
+                        acc[name] = {
+                            service_count: 0,
+                            total_wait_time: 0,
+                            min_wait_time: agent.min_wait_time,
+                            max_wait_time: agent.max_wait_time,
+                            count: 0
+                        };
+                    }
+                    acc[name].service_count += parseInt(agent.service_count) || 0;
+                    acc[name].total_wait_time += (parseFloat(agent.avg_wait_time) || 0) * (parseInt(agent.service_count) || 0);
+                    acc[name].count += parseInt(agent.service_count) || 0;
+                    acc[name].min_wait_time = Math.min(acc[name].min_wait_time, agent.min_wait_time || Infinity);
+                    acc[name].max_wait_time = Math.max(acc[name].max_wait_time, agent.max_wait_time || 0);
+                    return acc;
+                }, {});
+
+                const aggregatedAgents = Object.entries(groupedAgents).map(([name, data]) => ({
+                    agent_name: name,
+                    service_count: data.service_count,
+                    avg_wait_time: data.count > 0 ? data.total_wait_time / data.count : 0,
+                    min_wait_time: data.min_wait_time === Infinity ? 0 : data.min_wait_time,
+                    max_wait_time: data.max_wait_time
+                }));
+
+                tbody.innerHTML = aggregatedAgents.map(agent => `
                     <tr class="hover:bg-slate-50">
                         <td class="px-4 py-3 text-slate-900 font-medium">${agent.agent_name}</td>
                         <td class="px-4 py-3 text-center text-slate-700">${agent.service_count}</td>
@@ -375,7 +403,35 @@
                     return;
                 }
 
-                tbody.innerHTML = data.topics.map(topic => `
+                // Group by topic name
+                const groupedTopics = data.topics.reduce((acc, topic) => {
+                    const name = topic.topic_name || 'Unknown';
+                    if (!acc[name]) {
+                        acc[name] = {
+                            service_count: 0,
+                            total_wait_time: 0,
+                            min_wait_time: topic.min_wait_time,
+                            max_wait_time: topic.max_wait_time,
+                            count: 0
+                        };
+                    }
+                    acc[name].service_count += parseInt(topic.service_count) || 0;
+                    acc[name].total_wait_time += (parseFloat(topic.avg_wait_time) || 0) * (parseInt(topic.service_count) || 0);
+                    acc[name].count += parseInt(topic.service_count) || 0;
+                    acc[name].min_wait_time = Math.min(acc[name].min_wait_time, topic.min_wait_time || Infinity);
+                    acc[name].max_wait_time = Math.max(acc[name].max_wait_time, topic.max_wait_time || 0);
+                    return acc;
+                }, {});
+
+                const aggregatedTopics = Object.entries(groupedTopics).map(([name, data]) => ({
+                    topic_name: name,
+                    service_count: data.service_count,
+                    avg_wait_time: data.count > 0 ? data.total_wait_time / data.count : 0,
+                    min_wait_time: data.min_wait_time === Infinity ? 0 : data.min_wait_time,
+                    max_wait_time: data.max_wait_time
+                }));
+
+                tbody.innerHTML = aggregatedTopics.map(topic => `
                     <tr class="hover:bg-slate-50">
                         <td class="px-4 py-3 text-slate-900 font-medium">${topic.topic_name || 'Unknown'}</td>
                         <td class="px-4 py-3 text-center text-slate-700">${topic.service_count}</td>

@@ -218,7 +218,7 @@ async function getRecordsByTopic(filters = {}) {
             params.push(filters.endDate);
         }
 
-        query += ` GROUP BY topic_id ORDER BY service_count DESC`;
+        query += ` GROUP BY topic_id, topic_name ORDER BY service_count DESC`;
 
         const records = await dbAll(query, params);
         return records || [];
@@ -263,7 +263,7 @@ async function getRecordsByAgent(filters = {}) {
             params.push(filters.endDate);
         }
 
-        query += ` GROUP BY agent_id ORDER BY service_count DESC`;
+        query += ` GROUP BY agent_id, agent_name ORDER BY service_count DESC`;
 
         const records = await dbAll(query, params);
         return records || [];

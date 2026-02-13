@@ -2,11 +2,44 @@ const express = require("express")
 const router = express.Router()
 const setupSockets = require("../sockets")
 const agentDb = require("../../db/agent")
+const queueRecordDb = require('../../db/queue-record');
 const { requireAuth, requireAdmin, requireAgentOrAdmin } = require("../../middleware/auth")
 
 // Get the global state manager
 const getState = () => setupSockets.getGlobalState();
 const stateManager = setupSockets.stateManager;
+
+async function saveQueueRecordForTicket(ticket, agent) {
+    if (!ticket || !agent) {
+        return;
+    }
+
+    try {
+        const ticketTime = new Date(ticket.time);
+        const servedTime = new Date();
+        const waitTime = Math.floor((servedTime - ticketTime) / 1000);
+        const topicName = ticket.topicName || (ticket.topic && ticket.topic.name) || null;
+
+        const ticketToSave = {
+            displayId: ticket.displayId,
+            numericId: ticket.numericId,
+            name: ticket.name,
+            topicId: ticket.topicId,
+            topicName: topicName,
+            time: ticket.time
+        };
+
+        await queueRecordDb.createQueueRecord(
+            ticketToSave,
+            agent.id,
+            agent.name,
+            servedTime.toISOString(),
+            waitTime
+        );
+    } catch (err) {
+        console.error('Error saving queue record:', err);
+    }
+}
 
 router.get("/health", (req, res) => {
     res.status(200).json({ status: "ok" })
@@ -144,7 +177,7 @@ router.get("/station/:id", requireAuth, (req, res) => {
 });
 
 // Advance to next ticket for a specific station
-router.post("/station/:id/next-ticket", requireAuth, (req, res) => {
+router.post("/station/:id/next-ticket", requireAuth, async (req, res) => {
     const state = getState();
     const stationId = parseInt(req.params.id);
     const agent = state.agents.find(a => a.id === stationId);
@@ -174,13 +207,17 @@ router.post("/station/:id/next-ticket", requireAuth, (req, res) => {
             });
         }
         agent.isPaused = false;
+        const previousTicket = agent.currentTicket;
         agent.previousTicket = agent.currentTicket;
         agent.currentTicket = state.ticketQueue.splice(ticketIndex, 1)[0];
+        await saveQueueRecordForTicket(previousTicket, agent);
     } else {
         // No topic assigned, get any ticket from queue
         agent.isPaused = false;
+        const previousTicket = agent.currentTicket;
         agent.previousTicket = agent.currentTicket;
         agent.currentTicket = state.ticketQueue.shift();
+        await saveQueueRecordForTicket(previousTicket, agent);
     }
     
     // Broadcast to all connected clients
@@ -269,7 +306,7 @@ router.post("/station/:id/toggle-pause", requireAuth, async (req, res) => {
 });
 
 // Complete current ticket (mark as served, without getting next one)
-router.post("/station/:id/complete", requireAuth, (req, res) => {
+router.post("/station/:id/complete", requireAuth, async (req, res) => {
     try {
         const state = getState();
         const stationId = parseInt(req.params.id);
@@ -296,6 +333,8 @@ router.post("/station/:id/complete", requireAuth, (req, res) => {
                 error: "No current ticket to complete"
             });
         }
+
+        await saveQueueRecordForTicket(agent.currentTicket, agent);
         
         agent.previousTicket = agent.currentTicket;
         agent.currentTicket = null;
@@ -321,8 +360,6 @@ router.post("/station/:id/complete", requireAuth, (req, res) => {
 });
 
 // Queue Report Routes
-const queueRecordDb = require('../../db/queue-record');
-
 // Report page
 router.get("/report", requireAdmin, async (req, res) => {
     try {
@@ -355,7 +392,7 @@ router.get("/api/queue-records", requireAdmin, async (req, res) => {
         const filters = {};
         const pagination = {
             limit: parseInt(req.query.limit) || 50,
-            offset: (parseInt(req.query.page) || 1 - 1) * (parseInt(req.query.limit) || 50)
+            offset: ((parseInt(req.query.page) || 1) - 1) * (parseInt(req.query.limit) || 50)
         };
 
         if (req.query.startDate) filters.startDate = req.query.startDate;
