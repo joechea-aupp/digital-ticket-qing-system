@@ -42,9 +42,30 @@
     <script>
         let ws = null;
         let previousAgentsState = [];
+        let audioPermissionGranted = false;
 
         const connectedClasses = ["bg-emerald-500", "animate-pulse"];
         const disconnectedClasses = ["bg-rose-500"];
+
+        // Initialize audio permission on first user interaction
+        function enableAudio() {
+            if (audioPermissionGranted) return;
+            
+            const notificationSound = '{{notificationSound}}' || 'happy-bell.wav';
+            const audio = new Audio(`/sounds/${notificationSound}`);
+            audio.volume = 0.5;
+            
+            audio.play()
+                .then(() => {
+                    audioPermissionGranted = true;
+                    audio.pause();
+                    console.log('Audio permission granted');
+                })
+                .catch(error => {
+                    console.warn('Could not initialize audio:', error);
+                    audioPermissionGranted = false;
+                });
+        }
 
         // Play user's preferred notification sound
         function playDingSound() {
@@ -52,11 +73,28 @@
                 const notificationSound = '{{notificationSound}}' || 'happy-bell.wav';
                 const audio = new Audio(`/sounds/${notificationSound}`);
                 audio.volume = 0.5; // Set volume to 50%
-                audio.play().catch(error => {
-                    console.warn('Could not play ding sound:', error);
-                });
+                
+                const playPromise = audio.play();
+                if (playPromise !== undefined) {
+                    playPromise
+                        .then(() => {
+                            audioPermissionGranted = true;
+                        })
+                        .catch(error => {
+                            if (error.name === 'NotAllowedError') {
+                                console.warn('Audio playback not allowed. User interaction required. Please click somewhere on the page.');
+                            } else if (error.name === 'NotSupportedError') {
+                                console.warn('Audio format not supported:', error);
+                            } else {
+                                console.warn('Could not play ding sound:', error);
+                            }
+                        });
+                } else {
+                    // Older browsers that don't return a promise
+                    audioPermissionGranted = true;
+                }
             } catch (error) {
-                console.warn('Could not play ding sound:', error);
+                console.warn('Error creating audio element:', error);
             }
         }
 
@@ -205,5 +243,10 @@
         window.addEventListener('beforeunload', () => {
             if (ws) ws.close();
         });
+
+        // Enable audio on first user interaction
+        document.addEventListener('click', enableAudio, { once: true });
+        document.addEventListener('touchstart', enableAudio, { once: true });
+        document.addEventListener('keydown', enableAudio, { once: true });
     </script>
 </body>
