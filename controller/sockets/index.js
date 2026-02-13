@@ -1,4 +1,5 @@
 const agentDb = require('../../db/agent');
+const queueRecordDb = require('../../db/queue-record');
 
 let ticketQueue = [];
 let topicCounters = {}; // Track ticket counter per topic {topicId: counter}
@@ -448,6 +449,28 @@ const setupSockets = (wss, serverState) => {
                             error: 'Agent not found' 
                         }));
                         return;
+                    }
+                    
+                    // Save the completed ticket to queue_records before clearing it
+                    if (agent.currentTicket) {
+                        try {
+                            const ticket = agent.currentTicket;
+                            const ticketTime = new Date(ticket.time);
+                            const servedTime = new Date();
+                            const waitTime = Math.floor((servedTime - ticketTime) / 1000); // in seconds
+                            
+                            await queueRecordDb.createQueueRecord(
+                                ticket,
+                                agent.id,
+                                agent.name,
+                                servedTime.toISOString(),
+                                waitTime
+                            );
+                            console.log(`Queue record saved for ticket ${ticket.displayId}`);
+                        } catch (err) {
+                            console.error('Error saving queue record:', err);
+                            // Continue even if record saving fails
+                        }
                     }
                     
                     // Mark as previous ticket and clear current (does NOT return to queue)

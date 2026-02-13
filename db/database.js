@@ -159,6 +159,45 @@ function initDatabase() {
                 console.log('Agents table initialized');
             }
         });
+
+        // Create queue_records table for storing completed tickets
+        db.run(`
+            CREATE TABLE IF NOT EXISTS queue_records (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                ticket_display_id TEXT NOT NULL,
+                ticket_numeric_id INTEGER NOT NULL,
+                ticket_name TEXT NOT NULL,
+                topic_id INTEGER,
+                topic_name TEXT,
+                agent_id INTEGER,
+                agent_name TEXT,
+                served_at DATETIME,
+                wait_time_seconds INTEGER,
+                created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+            )
+        `, (err) => {
+            if (err) {
+                console.error('Error creating queue_records table:', err);
+            } else {
+                console.log('Queue records table initialized');
+            }
+        });
+
+        // Create index for faster queries
+        db.run(`
+            CREATE INDEX IF NOT EXISTS idx_queue_records_created_at 
+            ON queue_records(created_at DESC)
+        `);
+        
+        db.run(`
+            CREATE INDEX IF NOT EXISTS idx_queue_records_agent_id 
+            ON queue_records(agent_id)
+        `);
+        
+        db.run(`
+            CREATE INDEX IF NOT EXISTS idx_queue_records_topic_id 
+            ON queue_records(topic_id)
+        `);
     });
 }
 

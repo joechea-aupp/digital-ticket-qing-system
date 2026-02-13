@@ -320,4 +320,179 @@ router.post("/station/:id/complete", requireAuth, (req, res) => {
     }
 });
 
+// Queue Report Routes
+const queueRecordDb = require('../../db/queue-record');
+
+// Report page
+router.get("/report", requireAdmin, async (req, res) => {
+    try {
+        const topicModule = require('../../db/topic');
+        const agentModule = require('../../db/agent');
+        
+        const topics = await topicModule.getAllTopics();
+        const agents = await agentModule.getAllAgents();
+        
+        res.render("report", { 
+            title: "Queue Reports",
+            topics: topics || [],
+            agents: agents || [],
+            isAdmin: true
+        });
+    } catch (error) {
+        console.error('Error loading report page:', error);
+        res.render("report", { 
+            title: "Queue Reports",
+            topics: [],
+            agents: [],
+            isAdmin: true
+        });
+    }
+});
+
+// API endpoint to get queue records
+router.get("/api/queue-records", requireAdmin, async (req, res) => {
+    try {
+        const filters = {};
+        const pagination = {
+            limit: parseInt(req.query.limit) || 50,
+            offset: (parseInt(req.query.page) || 1 - 1) * (parseInt(req.query.limit) || 50)
+        };
+
+        if (req.query.startDate) filters.startDate = req.query.startDate;
+        if (req.query.endDate) filters.endDate = req.query.endDate;
+        if (req.query.topicId) filters.topicId = parseInt(req.query.topicId);
+        if (req.query.agentId) filters.agentId = parseInt(req.query.agentId);
+
+        const records = await queueRecordDb.getAllQueueRecords(filters, pagination);
+        const total = await queueRecordDb.getQueueRecordsCount(filters);
+        const statistics = await queueRecordDb.getQueueStatistics(filters);
+
+        res.json({
+            success: true,
+            records: records,
+            total: total,
+            statistics: statistics
+        });
+    } catch (error) {
+        console.error('Error fetching queue records:', error);
+        res.status(500).json({
+            success: false,
+            error: error.message
+        });
+    }
+});
+
+// API endpoint to get agent performance
+router.get("/api/queue-records/performance/agents", requireAdmin, async (req, res) => {
+    try {
+        const filters = {};
+
+        if (req.query.startDate) filters.startDate = req.query.startDate;
+        if (req.query.endDate) filters.endDate = req.query.endDate;
+        if (req.query.topicId) filters.topicId = parseInt(req.query.topicId);
+
+        const agents = await queueRecordDb.getRecordsByAgent(filters);
+
+        res.json({
+            success: true,
+            agents: agents
+        });
+    } catch (error) {
+        console.error('Error fetching agent performance:', error);
+        res.status(500).json({
+            success: false,
+            error: error.message
+        });
+    }
+});
+
+// API endpoint to get topic performance
+router.get("/api/queue-records/performance/topics", requireAdmin, async (req, res) => {
+    try {
+        const filters = {};
+
+        if (req.query.startDate) filters.startDate = req.query.startDate;
+        if (req.query.endDate) filters.endDate = req.query.endDate;
+
+        const topics = await queueRecordDb.getRecordsByTopic(filters);
+
+        res.json({
+            success: true,
+            topics: topics
+        });
+    } catch (error) {
+        console.error('Error fetching topic performance:', error);
+        res.status(500).json({
+            success: false,
+            error: error.message
+        });
+    }
+});
+
+// API endpoint to download records as CSV
+router.get("/api/queue-records/download", requireAdmin, async (req, res) => {
+    try {
+        const filters = {};
+
+        if (req.query.startDate) filters.startDate = req.query.startDate;
+        if (req.query.endDate) filters.endDate = req.query.endDate;
+        if (req.query.topicId) filters.topicId = parseInt(req.query.topicId);
+        if (req.query.agentId) filters.agentId = parseInt(req.query.agentId);
+
+        // Get all records without pagination
+        const records = await queueRecordDb.getAllQueueRecords(filters, { limit: 999999, offset: 0 });
+
+        if (records.length === 0) {
+            return res.status(400).json({
+                success: false,
+                error: "No records to download"
+            });
+        }
+
+        // Generate CSV
+        const csv = generateCSV(records);
+
+        // Set response headers for download
+        const timestamp = new Date().toISOString().split('T')[0];
+        res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+        res.setHeader('Content-Disposition', `attachment; filename="queue-report-${timestamp}.csv"`);
+        res.send(csv);
+    } catch (error) {
+        console.error('Error downloading records:', error);
+        res.status(500).json({
+            success: false,
+            error: error.message
+        });
+    }
+});
+
+// Helper function to generate CSV
+function generateCSV(records) {
+    const headers = [
+        'Ticket ID',
+        'Customer Name',
+        'Topic',
+        'Agent',
+        'Wait Time (seconds)',
+        'Served At',
+        'Created At'
+    ];
+
+    let csv = headers.join(',') + '\n';
+
+    records.forEach(record => {
+        csv += [
+            `"${record.ticket_display_id}"`,
+            `"${record.ticket_name}"`,
+            `"${record.topic_name || ''}"`,
+            `"${record.agent_name || ''}"`,
+            record.wait_time_seconds || 0,
+            `"${record.served_at || ''}"`,
+            `"${record.created_at || ''}"`
+        ].join(',') + '\n';
+    });
+
+    return csv;
+}
+
 module.exports = router
