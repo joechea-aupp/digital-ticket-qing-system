@@ -141,6 +141,24 @@ function initDatabase() {
                 }
             }
         });
+
+        // Create agents table for persistent counters
+        db.run(`
+            CREATE TABLE IF NOT EXISTS agents (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                name TEXT NOT NULL,
+                topic_id INTEGER,
+                topic_name TEXT,
+                is_paused INTEGER DEFAULT 0,
+                created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+            )
+        `, (err) => {
+            if (err) {
+                console.error('Error creating agents table:', err);
+            } else {
+                console.log('Agents table initialized');
+            }
+        });
     });
 }
 

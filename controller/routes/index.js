@@ -1,6 +1,7 @@
 const express = require("express")
 const router = express.Router()
 const setupSockets = require("../sockets")
+const agentDb = require("../../db/agent")
 const { requireAuth, requireAdmin, requireAgentOrAdmin } = require("../../middleware/auth")
 
 // Get the global state manager
@@ -231,7 +232,7 @@ router.post("/station/:id/clear-current", requireAuth, (req, res) => {
 });
 
 // Toggle pause for a specific station
-router.post("/station/:id/toggle-pause", requireAuth, (req, res) => {
+router.post("/station/:id/toggle-pause", requireAuth, async (req, res) => {
     const state = getState();
     const stationId = parseInt(req.params.id);
     const agent = state.agents.find(a => a.id === stationId);
@@ -244,6 +245,15 @@ router.post("/station/:id/toggle-pause", requireAuth, (req, res) => {
     }
     
     agent.isPaused = !agent.isPaused;
+    try {
+        await agentDb.updateAgentPause(agent.id, agent.isPaused);
+    } catch (error) {
+        console.error('Error updating agent pause status:', error);
+        return res.status(500).json({
+            success: false,
+            error: 'Failed to update pause status'
+        });
+    }
     
     // Broadcast to all connected clients
     if (setupSockets.stateManager.broadcastAll) {
