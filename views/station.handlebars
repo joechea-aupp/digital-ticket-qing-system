@@ -64,7 +64,7 @@
 
             <div class="mt-8 flex flex-col gap-3 sm:flex-row">
                 <button id="nextTicketBtn" class="flex-1 rounded-lg bg-emerald-600 px-4 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-emerald-700 disabled:bg-slate-300 disabled:cursor-not-allowed disabled:opacity-50" onclick="nextTicket()">Next Ticket</button>
-                <button id="completeBtn" class="flex-1 rounded-lg bg-indigo-600 px-4 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-indigo-700" onclick="completeTicket()">Complete</button>
+                <button id="completeBtn" class="flex-1 rounded-lg bg-indigo-600 px-4 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-indigo-700 disabled:bg-slate-300 disabled:cursor-not-allowed disabled:opacity-50" onclick="completeTicket()">Complete</button>
                 <button id="pauseBtn" class="flex-1 rounded-lg bg-sky-600 px-4 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-sky-700" onclick="togglePause()">Pause</button>
                 <button class="flex-1 rounded-lg bg-rose-600 px-4 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-rose-700" onclick="clearCurrent()">Clear Current</button>
                 <button class="flex-1 rounded-lg border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-600 shadow-sm transition hover:bg-slate-50" onclick="location.href='/stations'">Back to Stations</button>
@@ -78,7 +78,7 @@
 
         function initWebSocket() {
             const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-            socket = new WebSocket(protocol + '//' + window.location.host);
+            socket = new WebSocket(protocol + '//' + window.location.host + '/ws/stations');
 
             socket.onopen = () => {
                 console.log('WebSocket connected');
@@ -169,6 +169,12 @@
                     const nextTicketBtn = document.getElementById('nextTicketBtn');
                     if (nextTicketBtn) {
                         nextTicketBtn.disabled = !data.hasAvailableTickets;
+                    }
+
+                    // Update Complete button state
+                    const completeBtn = document.getElementById('completeBtn');
+                    if (completeBtn) {
+                        completeBtn.disabled = !station.currentTicket;
                     }
                 }
             } catch (error) {
