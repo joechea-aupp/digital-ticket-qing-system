@@ -188,17 +188,6 @@
             }
         }
 
-        function setTicketNumberStrikethrough(shouldStrike) {
-            const ticketNumberEl = document.getElementById('ticketNumber');
-            if (ticketNumberEl) {
-                if (shouldStrike) {
-                    ticketNumberEl.classList.add('line-through');
-                } else {
-                    ticketNumberEl.classList.remove('line-through');
-                }
-            }
-        }
-
         function updateTicketsRemaining() {
             const container = document.getElementById('ticketsRemainingContainer');
 
@@ -241,7 +230,6 @@
                 });
                 setTicketCardExpired(false);
                 setTicketCardYourTurn(true);
-                document.getElementById('ticketNumber').classList.remove('line-through');
                 container.classList.remove('hidden');
                 return;
             }
@@ -266,7 +254,6 @@
                 });
                 setTicketCardExpired(true);
                 setTicketCardYourTurn(false);
-                setTicketNumberStrikethrough(true);
                 container.classList.remove('hidden');
                 return;
             }
@@ -303,7 +290,6 @@
                         });
                         setTicketCardExpired(true);
                         setTicketCardYourTurn(false);
-                        setTicketNumberStrikethrough(true);
                         container.classList.remove('hidden');
                         return;
                     }
@@ -330,7 +316,6 @@
                 });
                 setTicketCardExpired(false);
                 setTicketCardYourTurn(true);
-                setTicketNumberStrikethrough(false);
                 container.classList.remove('hidden');
             } else if (ticketsRemaining < 0) {
                 setTicketsRemainingDisplay({
@@ -340,7 +325,6 @@
                 });
                 setTicketCardExpired(true);
                 setTicketCardYourTurn(false);
-                setTicketNumberStrikethrough(true);
                 container.classList.remove('hidden');
             } else {
                 setTicketsRemainingDisplay({
@@ -350,7 +334,6 @@
                 });
                 setTicketCardExpired(false);
                 setTicketCardYourTurn(false);
-                setTicketNumberStrikethrough(false);
                 container.classList.remove('hidden');
             }
         }
