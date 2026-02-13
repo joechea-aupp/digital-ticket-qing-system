@@ -3,7 +3,7 @@
         {{> sidebar
             sidebarTitle="Reports"
             sidebarSubtitle="Queue analytics & data"
-            showQueue=false
+            showQueue=true
             showDashboard=true
             showTopic=true
             showStations=true
@@ -170,7 +170,24 @@
                 <div class="mb-8 rounded-2xl bg-white/90 p-6 shadow-lg ring-1 ring-slate-200/60">
                     <div class="flex items-center justify-between mb-4">
                         <h2 class="text-lg font-semibold text-slate-900">Queue Records</h2>
-                        <div class="text-sm text-slate-500" id="recordCount">Loading...</div>
+                        <div class="flex items-center gap-4">
+                            <div class="flex items-center gap-2">
+                                <label for="recordsPageSize" class="text-sm text-slate-600">Show:</label>
+                                <select 
+                                    id="recordsPageSize" 
+                                    onchange="changeRecordsPageSize()"
+                                    class="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-sm text-slate-900 focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
+                                >
+                                    <option value="5" selected>5</option>
+                                    <option value="10">10</option>
+                                    <option value="25">25</option>
+                                    <option value="50">50</option>
+                                    <option value="100">100</option>
+                                </select>
+                                <span class="text-sm text-slate-600">rows</span>
+                            </div>
+                            <div class="text-sm text-slate-500" id="recordCount">Loading...</div>
+                        </div>
                     </div>
                     
                     <div class="overflow-x-auto">
@@ -215,7 +232,24 @@
 
                 <!-- Agent Performance Section -->
                 <div class="mb-8 rounded-2xl bg-white/90 p-6 shadow-lg ring-1 ring-slate-200/60">
-                    <h2 class="mb-4 text-lg font-semibold text-slate-900">Performance by Agent</h2>
+                    <div class="flex items-center justify-between mb-4">
+                        <h2 class="text-lg font-semibold text-slate-900">Performance by Agent</h2>
+                        <div class="flex items-center gap-2">
+                            <label for="agentRowsLimit" class="text-sm text-slate-600">Show:</label>
+                            <select 
+                                id="agentRowsLimit" 
+                                onchange="changeAgentRowsLimit()"
+                                class="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-sm text-slate-900 focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
+                            >
+                                <option value="5" selected>5</option>
+                                <option value="10">10</option>
+                                <option value="25">25</option>
+                                <option value="50">50</option>
+                                <option value="all">All</option>
+                            </select>
+                            <span class="text-sm text-slate-600">rows</span>
+                        </div>
+                    </div>
                     <div id="agentPerformanceTable" class="overflow-x-auto">
                         <table class="w-full text-sm">
                             <thead class="border-b border-slate-200 bg-slate-50">
@@ -238,7 +272,24 @@
 
                 <!-- Topic Performance Section -->
                 <div class="rounded-2xl bg-white/90 p-6 shadow-lg ring-1 ring-slate-200/60">
-                    <h2 class="mb-4 text-lg font-semibold text-slate-900">Performance by Topic</h2>
+                    <div class="flex items-center justify-between mb-4">
+                        <h2 class="text-lg font-semibold text-slate-900">Performance by Topic</h2>
+                        <div class="flex items-center gap-2">
+                            <label for="topicRowsLimit" class="text-sm text-slate-600">Show:</label>
+                            <select 
+                                id="topicRowsLimit" 
+                                onchange="changeTopicRowsLimit()"
+                                class="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-sm text-slate-900 focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
+                            >
+                                <option value="5" selected>5</option>
+                                <option value="10">10</option>
+                                <option value="25">25</option>
+                                <option value="50">50</option>
+                                <option value="all">All</option>
+                            </select>
+                            <span class="text-sm text-slate-600">rows</span>
+                        </div>
+                    </div>
                     <div id="topicPerformanceTable" class="overflow-x-auto">
                         <table class="w-full text-sm">
                             <thead class="border-b border-slate-200 bg-slate-50">
@@ -264,9 +315,13 @@
 
     <script>
         let currentPage = 1;
-        const pageSize = 50;
+        let pageSize = 5;
         let allRecords = [];
         let filteredRecords = [];
+        let agentRowsLimit = 5;
+        let topicRowsLimit = 5;
+        let allAgentData = [];
+        let allTopicData = [];
 
         function formatSeconds(seconds) {
             if (!seconds) return '0s';
@@ -361,7 +416,7 @@
                     return acc;
                 }, {});
 
-                const aggregatedAgents = Object.entries(groupedAgents).map(([name, data]) => ({
+                allAgentData = Object.entries(groupedAgents).map(([name, data]) => ({
                     agent_name: name,
                     service_count: data.service_count,
                     avg_wait_time: data.count > 0 ? data.total_wait_time / data.count : 0,
@@ -369,15 +424,7 @@
                     max_wait_time: data.max_wait_time
                 }));
 
-                tbody.innerHTML = aggregatedAgents.map(agent => `
-                    <tr class="hover:bg-slate-50">
-                        <td class="px-4 py-3 text-slate-900 font-medium">${agent.agent_name}</td>
-                        <td class="px-4 py-3 text-center text-slate-700">${agent.service_count}</td>
-                        <td class="px-4 py-3 text-center text-slate-700">${formatSeconds(Math.round(agent.avg_wait_time || 0))}</td>
-                        <td class="px-4 py-3 text-center text-slate-700">${formatSeconds(agent.min_wait_time || 0)}</td>
-                        <td class="px-4 py-3 text-center text-slate-700">${formatSeconds(agent.max_wait_time || 0)}</td>
-                    </tr>
-                `).join('');
+                renderAgentPerformance();
             } catch (error) {
                 console.error('Error loading agent performance:', error);
             }
@@ -423,7 +470,7 @@
                     return acc;
                 }, {});
 
-                const aggregatedTopics = Object.entries(groupedTopics).map(([name, data]) => ({
+                allTopicData = Object.entries(groupedTopics).map(([name, data]) => ({
                     topic_name: name,
                     service_count: data.service_count,
                     avg_wait_time: data.count > 0 ? data.total_wait_time / data.count : 0,
@@ -431,15 +478,7 @@
                     max_wait_time: data.max_wait_time
                 }));
 
-                tbody.innerHTML = aggregatedTopics.map(topic => `
-                    <tr class="hover:bg-slate-50">
-                        <td class="px-4 py-3 text-slate-900 font-medium">${topic.topic_name || 'Unknown'}</td>
-                        <td class="px-4 py-3 text-center text-slate-700">${topic.service_count}</td>
-                        <td class="px-4 py-3 text-center text-slate-700">${formatSeconds(Math.round(topic.avg_wait_time || 0))}</td>
-                        <td class="px-4 py-3 text-center text-slate-700">${formatSeconds(topic.min_wait_time || 0)}</td>
-                        <td class="px-4 py-3 text-center text-slate-700">${formatSeconds(topic.max_wait_time || 0)}</td>
-                    </tr>
-                `).join('');
+                renderTopicPerformance();
             } catch (error) {
                 console.error('Error loading topic performance:', error);
             }
@@ -502,6 +541,62 @@
             loadRecords();
             loadAgentPerformance();
             loadTopicPerformance();
+        }
+
+        function changeRecordsPageSize() {
+            pageSize = parseInt(document.getElementById('recordsPageSize').value);
+            currentPage = 1;
+            loadRecords();
+        }
+
+        function changeAgentRowsLimit() {
+            const value = document.getElementById('agentRowsLimit').value;
+            agentRowsLimit = value === 'all' ? Infinity : parseInt(value);
+            renderAgentPerformance();
+        }
+
+        function changeTopicRowsLimit() {
+            const value = document.getElementById('topicRowsLimit').value;
+            topicRowsLimit = value === 'all' ? Infinity : parseInt(value);
+            renderTopicPerformance();
+        }
+
+        function renderAgentPerformance() {
+            const tbody = document.getElementById('agentPerformanceBody');
+            if (allAgentData.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="5" class="px-4 py-8 text-center text-slate-500">No data available</td></tr>';
+                return;
+            }
+
+            const displayData = agentRowsLimit === Infinity ? allAgentData : allAgentData.slice(0, agentRowsLimit);
+            tbody.innerHTML = displayData.map(agent => `
+                <tr class="hover:bg-slate-50">
+                    <td class="px-4 py-3 text-slate-900 font-medium">${agent.agent_name}</td>
+                    <td class="px-4 py-3 text-center text-slate-700">${agent.service_count}</td>
+                    <td class="px-4 py-3 text-center text-slate-700">${formatSeconds(Math.round(agent.avg_wait_time || 0))}</td>
+                    <td class="px-4 py-3 text-center text-slate-700">${formatSeconds(agent.min_wait_time || 0)}</td>
+                    <td class="px-4 py-3 text-center text-slate-700">${formatSeconds(agent.max_wait_time || 0)}</td>
+                </tr>
+            `).join('');
+        }
+
+        function renderTopicPerformance() {
+            const tbody = document.getElementById('topicPerformanceBody');
+            if (allTopicData.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="5" class="px-4 py-8 text-center text-slate-500">No data available</td></tr>';
+                return;
+            }
+
+            const displayData = topicRowsLimit === Infinity ? allTopicData : allTopicData.slice(0, topicRowsLimit);
+            tbody.innerHTML = displayData.map(topic => `
+                <tr class="hover:bg-slate-50">
+                    <td class="px-4 py-3 text-slate-900 font-medium">${topic.topic_name || 'Unknown'}</td>
+                    <td class="px-4 py-3 text-center text-slate-700">${topic.service_count}</td>
+                    <td class="px-4 py-3 text-center text-slate-700">${formatSeconds(Math.round(topic.avg_wait_time || 0))}</td>
+                    <td class="px-4 py-3 text-center text-slate-700">${formatSeconds(topic.min_wait_time || 0)}</td>
+                    <td class="px-4 py-3 text-center text-slate-700">${formatSeconds(topic.max_wait_time || 0)}</td>
+                </tr>
+            `).join('');
         }
 
         async function downloadCSV() {
