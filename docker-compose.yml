@@ -4,6 +4,11 @@ services:
     env_file: ./.env
     volumes:
       - ./db:/usr/src/app/db
+      - ./src:/usr/src/app/src
+      - ./views:/usr/src/app/views
+      - ./middleware:/usr/src/app/middleware
+      - ./controller:/usr/src/app/controller
+      - ./server.js:/usr/src/app/server.js
     # restart: always
     entrypoint: ["/usr/src/app/docker_config/docker-entrypoint.sh"]
 

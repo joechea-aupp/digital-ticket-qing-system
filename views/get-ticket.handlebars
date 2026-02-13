@@ -170,12 +170,22 @@
 
         function setTicketCardExpired(isExpired) {
             const ticketCard = document.getElementById('resultContainer');
-            ticketCard.classList.toggle('ticket-card--expired', isExpired);
+            if (isExpired) {
+                ticketCard.classList.add('ticket-card--expired');
+                ticketCard.classList.remove('ticket-card--your-turn');
+            } else {
+                ticketCard.classList.remove('ticket-card--expired');
+            }
         }
 
         function setTicketCardYourTurn(isYourTurn) {
             const ticketCard = document.getElementById('resultContainer');
-            ticketCard.classList.toggle('ticket-card--your-turn', isYourTurn);
+            if (isYourTurn) {
+                ticketCard.classList.add('ticket-card--your-turn');
+                ticketCard.classList.remove('ticket-card--expired');
+            } else {
+                ticketCard.classList.remove('ticket-card--your-turn');
+            }
         }
 
         function updateTicketsRemaining() {
@@ -183,20 +193,6 @@
 
             if (!myTicket || !myTicket.id) {
                 container.classList.add('hidden');
-                return;
-            }
-
-            const hasAvailableAgents = Array.isArray(agents) && agents.some(agent => !agent.isPaused);
-
-            if (!hasAvailableAgents) {
-                setTicketsRemainingDisplay({
-                    value: '',
-                    className: 'mt-2 text-2xl font-semibold text-slate-500',
-                    text: 'Counters are on break. Thank you for patiently waiting.'
-                });
-                setTicketCardExpired(false);
-                setTicketCardYourTurn(false);
-                container.classList.remove('hidden');
                 return;
             }
 
@@ -220,43 +216,110 @@
                 });
                 setTicketCardExpired(false);
                 setTicketCardYourTurn(true);
-                document.getElementById('ticketNumber').classList.remove('line-through');
+                container.classList.remove('hidden');
+                return;
+            }
+
+            // Check if this ticket has been completed (is in some agent's previousTicket)
+            // This check must happen EARLY before any other logic that could return
+            const isCompleted = agents.some(agent => {
+                if (!agent.previousTicket) return false;
+                const prevTicket = agent.previousTicket;
+                const sameTicket = (prevTicket.numericId === myTicket.numericId) || 
+                                  (prevTicket.displayId === myTicket.id) ||
+                                  (prevTicket.id === myTicket.id);
+                const sameTopic = (prevTicket.topicId === myTicket.topicId);
+                return sameTicket && sameTopic;
+            });
+
+            if (isCompleted) {
+                setTicketsRemainingDisplay({
+                    value: 'Expired',
+                    className: 'mt-2 text-2xl font-semibold text-slate-300',
+                    text: 'Your ticket has been completed. Please contact the counter.'
+                });
+                setTicketCardExpired(true);
+                setTicketCardYourTurn(false);
                 container.classList.remove('hidden');
                 return;
             }
 
             // Find the highest ticket number being served across all agents (within same topic)
+            // Check this BEFORE checking if counters are paused, so expired status is preserved
             let highestServingNumericId = null;
             if (window.servedTicketIds && window.servedTicketIds.length > 0) {
-                // Filter served tickets by same topic as my ticket
-                const sameTopicServedIds = agents
-                    .filter(agent => agent.currentTicket && agent.currentTicket.topicId === myTicket.topicId)
-                    .map(agent => agent.currentTicket.numericId)
-                    .filter(id => id !== undefined);
+                // Filter served tickets by same topic as my ticket (only current tickets)
+                const sameTopicServedIds = [];
+                agents.forEach(agent => {
+                    if (agent.currentTicket && agent.currentTicket.topicId === myTicket.topicId) {
+                        sameTopicServedIds.push(agent.currentTicket.numericId);
+                    }
+                });
                 
                 if (sameTopicServedIds.length > 0) {
                     highestServingNumericId = Math.max(...sameTopicServedIds);
                 }
             }
 
-            if (highestServingNumericId === null) {
-                if (lastServedTicketId !== null) {
-                    // Find the numeric ID of the last served ticket if it's in the same topic
-                    const lastServedNumericId = agents
-                        .filter(agent => agent.previousTicket && agent.previousTicket.displayId === lastServedTicketId && agent.previousTicket.topicId === myTicket.topicId)
-                        .map(agent => agent.previousTicket.numericId)[0];
-                    
-                    if (lastServedNumericId && myTicket.numericId < lastServedNumericId) {
-                        setTicketsRemainingDisplay({
-                            value: 'Expired',
-                            className: 'mt-2 text-2xl font-semibold text-slate-300',
-                            text: 'Your ticket has passed. Please contact the counter.'
-                        });
-                        setTicketCardExpired(true);
-                        container.classList.remove('hidden');
-                        return;
-                    }
+            // Check if ticket has expired by comparing to ALL previously completed tickets
+            // Get the highest numericId from all previousTickets in the same topic
+            const previousTicketIds = agents
+                .filter(agent => agent.previousTicket && agent.previousTicket.topicId === myTicket.topicId)
+                .map(agent => agent.previousTicket.numericId);
+            
+            const highestPreviousNumericId = previousTicketIds.length > 0 ? Math.max(...previousTicketIds) : null;
+
+            // If there are no current tickets being served but there are completed tickets,
+            // check if this ticket has been passed
+            if (highestServingNumericId === null && highestPreviousNumericId !== null) {
+                if (myTicket.numericId <= highestPreviousNumericId) {
+                    setTicketsRemainingDisplay({
+                        value: 'Expired',
+                        className: 'mt-2 text-2xl font-semibold text-slate-300',
+                        text: 'Your ticket has passed. Please contact the counter.'
+                    });
+                    setTicketCardExpired(true);
+                    setTicketCardYourTurn(false);
+                    container.classList.remove('hidden');
+                    return;
                 }
+            }
+
+            // Check if ticket has been passed based on currently serving tickets
+            if (highestServingNumericId !== null) {
+                const ticketsRemaining = myTicket.numericId - highestServingNumericId;
+                
+                if (ticketsRemaining < 0) {
+                    setTicketsRemainingDisplay({
+                        value: 'Expired',
+                        className: 'mt-2 text-2xl font-semibold text-slate-300',
+                        text: 'Your ticket has passed. Please contact the counter.'
+                    });
+                    setTicketCardExpired(true);
+                    setTicketCardYourTurn(false);
+                    container.classList.remove('hidden');
+                    return;
+                }
+            }
+
+            // Check if all counters are paused AFTER checking all expired conditions
+            const hasAvailableAgents = Array.isArray(agents) && agents.some(agent => !agent.isPaused);
+
+            if (!hasAvailableAgents) {
+                setTicketsRemainingDisplay({
+                    value: '',
+                    className: 'mt-2 text-2xl font-semibold text-slate-500',
+                    text: 'Counters are on break. Thank you for patiently waiting.'
+                });
+                setTicketCardExpired(false);
+                setTicketCardYourTurn(false);
+                container.classList.remove('hidden');
+                return;
+            }
+
+            // At this point, we know the ticket is valid and counters are available
+            // Recalculate position in queue (we already have highestServingNumericId from above)
+            if (highestServingNumericId === null) {
                 setTicketsRemainingDisplay({
                     value: '',
                     className: 'mt-2 text-2xl font-semibold text-slate-500',
@@ -279,18 +342,9 @@
                 });
                 setTicketCardExpired(false);
                 setTicketCardYourTurn(true);
-                document.getElementById('ticketNumber').classList.remove('line-through');
-                container.classList.remove('hidden');
-            } else if (ticketsRemaining < 0) {
-                setTicketsRemainingDisplay({
-                    value: 'Expired',
-                    className: 'mt-2 text-2xl font-semibold text-slate-300',
-                    text: 'Your ticket has passed. Please contact the counter.'
-                });
-                setTicketCardExpired(true);
-                setTicketCardYourTurn(false);
                 container.classList.remove('hidden');
             } else {
+                // ticketsRemaining > 0, show how many tickets ahead
                 setTicketsRemainingDisplay({
                     value: ticketsRemaining,
                     className: 'mt-2 text-3xl font-semibold text-emerald-600',

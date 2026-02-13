@@ -384,6 +384,23 @@ const setupSockets = (wss, serverState) => {
                     agent.previousTicket = agent.currentTicket;
                     agent.currentTicket = null;
                     broadcastAll();
+                } else if (data.action === 'completeTicket') {
+                    // Complete current ticket for a specific agent (removes from queue)
+                    const agentId = data.agentId;
+                    const agent = agents.find(a => a.id === agentId);
+                    
+                    if (!agent) {
+                        ws.send(JSON.stringify({ 
+                            success: false, 
+                            error: 'Agent not found' 
+                        }));
+                        return;
+                    }
+                    
+                    // Mark as previous ticket and clear current (does NOT return to queue)
+                    agent.previousTicket = agent.currentTicket;
+                    agent.currentTicket = null;
+                    broadcastAll();
                 } else if (data.action === 'togglePause') {
                     const agentId = data.agentId;
                     const agent = agents.find(a => a.id === agentId);
