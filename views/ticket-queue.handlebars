@@ -5,6 +5,21 @@
             <div class="absolute bottom-10 left-10 h-56 w-56 rounded-full bg-emerald-200/60 blur-3xl"></div>
         </div>
 
+        <div id="audio-interaction-notice" style="
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            background: #0f172a;
+            color: #fff;
+            padding: 12px 16px;
+            font-size: 14px;
+            text-align: center;
+            box-shadow: 0 12px 24px rgba(15, 23, 42, 0.35);
+            z-index: 2000;
+            display: none;
+        ">Tap anywhere to enable notification sound.</div>
+
         <div class="relative mx-auto w-full max-w-6xl">
             <div class="flex flex-col items-start justify-between gap-4 rounded-2xl bg-white/80 px-6 py-5 shadow-lg ring-1 ring-slate-200/60 sm:flex-row sm:items-center">
                 <div>
@@ -35,6 +50,7 @@
                         <div class="text-xs uppercase tracking-wide text-emerald-700/70">In Queue</div>
                     </div>
                 </div>
+                <div id="queueDetails" class="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-3"></div>
             </section>
         </div>
     </div>
@@ -42,21 +58,182 @@
     <script>
         let ws = null;
         let previousAgentsState = [];
+        let audioPermissionGranted = false;
+        let audioUnlocked = false;
+        const AUDIO_PERMISSION_KEY = 'audio-permission-approved-by-user';
 
         const connectedClasses = ["bg-emerald-500", "animate-pulse"];
         const disconnectedClasses = ["bg-rose-500"];
 
+        // Show permission dialog
+        function showAudioPermissionDialog() {
+            if (document.getElementById('audio-permission-dialog')) return;
+            
+            const overlay = document.createElement('div');
+            overlay.id = 'audio-permission-dialog';
+            overlay.style.cssText = `
+                position: fixed;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                background: rgba(0, 0, 0, 0.5);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                z-index: 2000;
+            `;
+            
+            const dialog = document.createElement('div');
+            dialog.style.cssText = `
+                background: white;
+                border-radius: 12px;
+                padding: 32px;
+                max-width: 400px;
+                box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+                text-align: center;
+                font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            `;
+            
+            dialog.innerHTML = `
+                <div style="margin-bottom: 24px;">
+                    <div style="font-size: 48px; margin-bottom: 16px;">🔔</div>
+                    <h2 style="margin: 0 0 12px 0; font-size: 20px; color: #1a1a1a;">Enable Notifications</h2>
+                    <p style="margin: 0; color: #666; font-size: 14px;">
+                        This page would like to play notification sounds when tickets arrive. 
+                        You can change this anytime in your browser settings.
+                    </p>
+                </div>
+                <div style="display: flex; gap: 12px;">
+                    <button id="deny-audio" style="
+                        flex: 1;
+                        padding: 10px 16px;
+                        border: 1px solid #ccc;
+                        background: #f5f5f5;
+                        border-radius: 6px;
+                        cursor: pointer;
+                        font-size: 14px;
+                        font-weight: 600;
+                        color: #333;
+                        transition: all 0.2s;
+                    " onmouseover="this.style.background='#e5e5e5'" onmouseout="this.style.background='#f5f5f5'">
+                        Don't Allow
+                    </button>
+                    <button id="allow-audio" style="
+                        flex: 1;
+                        padding: 10px 16px;
+                        border: none;
+                        background: #667eea;
+                        border-radius: 6px;
+                        cursor: pointer;
+                        font-size: 14px;
+                        font-weight: 600;
+                        color: white;
+                        transition: all 0.2s;
+                    " onmouseover="this.style.background='#5568d3'" onmouseout="this.style.background='#667eea'">
+                        Allow
+                    </button>
+                </div>
+            `;
+            
+            overlay.appendChild(dialog);
+            document.body.appendChild(overlay);
+            
+            document.getElementById('allow-audio').addEventListener('click', () => {
+                audioPermissionGranted = true;
+                audioUnlocked = true;
+                localStorage.setItem(AUDIO_PERMISSION_KEY, 'true');
+                removeAudioDialog();
+                console.log('Audio permission approved');
+            });
+            
+            document.getElementById('deny-audio').addEventListener('click', () => {
+                localStorage.setItem(AUDIO_PERMISSION_KEY, 'false');
+                removeAudioDialog();
+                console.log('Audio permission denied');
+            });
+        }
+
+        function removeAudioDialog() {
+            const dialog = document.getElementById('audio-permission-dialog');
+            if (dialog) {
+                dialog.style.transition = 'opacity 0.3s ease-out';
+                dialog.style.opacity = '0';
+                setTimeout(() => dialog.remove(), 300);
+            }
+        }
+
+        function showAudioInteractionNotice() {
+            const notice = document.getElementById('audio-interaction-notice');
+            if (!notice) return;
+
+            notice.style.display = 'block';
+            notice.style.opacity = '1';
+            notice.style.transition = 'opacity 0.3s ease-out';
+            document.addEventListener('click', hideAudioInteractionNotice, { once: true });
+            document.addEventListener('touchstart', hideAudioInteractionNotice, { once: true });
+            document.addEventListener('keydown', hideAudioInteractionNotice, { once: true });
+        }
+
+        function hideAudioInteractionNotice() {
+            const notice = document.getElementById('audio-interaction-notice');
+            if (!notice) return;
+
+            notice.style.opacity = '0';
+            notice.style.transition = 'opacity 0.3s ease-out';
+            setTimeout(() => {
+                notice.style.display = 'none';
+            }, 300);
+        }
+
         // Play user's preferred notification sound
         function playDingSound() {
+            if (audioPermissionGranted === false) {
+                // User explicitly denied
+                return;
+            }
+
+            if (audioPermissionGranted !== true) {
+                // Permission not yet asked
+                showAudioPermissionDialog();
+                return;
+            }
+
+            // If audio not yet unlocked, try to unlock with muted play first
+            if (!audioUnlocked) {
+                try {
+                    const notificationSound = '{{notificationSound}}' || 'happy-bell.wav';
+                    const unlockerAudio = new Audio(`/sounds/${notificationSound}`);
+                    unlockerAudio.muted = true;
+                    unlockerAudio.volume = 0;
+                    unlockerAudio.play().then(() => {
+                        audioUnlocked = true;
+                        // Now play the actual sound
+                        playActualSound();
+                    }).catch(() => {
+                        console.log('Could not auto-unlock audio, needs user interaction');
+                        showAudioInteractionNotice();
+                    });
+                } catch (error) {
+                    console.warn('Error in auto-unlock:', error);
+                }
+                return;
+            }
+
+            // Audio is unlocked, play the sound
+            playActualSound();
+        }
+
+        function playActualSound() {
             try {
                 const notificationSound = '{{notificationSound}}' || 'happy-bell.wav';
                 const audio = new Audio(`/sounds/${notificationSound}`);
-                audio.volume = 0.5; // Set volume to 50%
+                audio.volume = 0.5;
                 audio.play().catch(error => {
-                    console.warn('Could not play ding sound:', error);
+                    console.warn('Could not play sound:', error.name);
                 });
             } catch (error) {
-                console.warn('Could not play ding sound:', error);
+                console.warn('Error playing sound:', error);
             }
         }
 
@@ -134,6 +311,7 @@
         function updateDisplay(data) {
             const agentsDisplayEl = document.getElementById('agentsDisplay');
             const queueRemainingEl = document.getElementById('queueRemaining');
+            const queueDetailsEl = document.getElementById('queueDetails');
 
             // Check for new ticket assignment before updating display
             if (checkForNewTicketAssignment(data.agents)) {
@@ -144,6 +322,71 @@
             previousAgentsState = JSON.parse(JSON.stringify(data.agents || []));
 
             queueRemainingEl.textContent = data.queueRemaining || 0;
+
+            const queue = Array.isArray(data.queue) ? data.queue : [];
+            if (queue.length === 0) {
+                const hasQueue = (data.queueRemaining || 0) > 0;
+                queueDetailsEl.innerHTML = `
+                    <div class="rounded-xl border border-dashed border-slate-200 bg-slate-50 px-4 py-3 text-center text-sm text-slate-500 sm:col-span-2 lg:col-span-3">
+                        ${hasQueue ? 'Queue details are syncing. Please refresh if this persists.' : 'No tickets waiting'}
+                    </div>
+                `;
+            } else {
+                const grouped = queue.reduce((acc, ticket) => {
+                    const topicName = (ticket.topic && ticket.topic.name) || ticket.topicName || 'General';
+                    if (!acc[topicName]) {
+                        acc[topicName] = [];
+                    }
+                    acc[topicName].push(ticket);
+                    return acc;
+                }, {});
+
+                queueDetailsEl.className = `mt-5`;
+                
+                const tableHTML = Object.entries(grouped).map(([topicName, tickets]) => {
+                    const rows = tickets.map((ticket, index) => {
+                        const ticketId = ticket.displayId || ticket.id || '-';
+                        const ticketName = ticket.name || '-';
+                        return `
+                            <tr class="hover:bg-slate-50">
+                                <td class="px-4 py-4 text-base font-semibold text-emerald-600">${ticketId}</td>
+                                <td class="px-4 py-4 text-base text-slate-700">${ticketName}</td>
+                                <td class="px-4 py-4">
+                                    <span class="inline-flex items-center rounded-full bg-sky-100 px-3 py-1 text-xs font-semibold text-sky-700">${topicName}</span>
+                                </td>
+                                <td class="px-4 py-4 text-center">
+                                    <span class="inline-flex items-center justify-center rounded-lg bg-slate-200 px-3 py-1 text-sm font-semibold text-slate-700">#${index + 1}</span>
+                                </td>
+                            </tr>
+                        `;
+                    }).join('');
+
+                    return `
+                        <div class="mb-6 rounded-xl border border-slate-100 bg-white shadow-sm overflow-hidden">
+                            <div class="bg-slate-50 px-4 py-3 border-b border-slate-200">
+                                <h3 class="text-sm font-semibold uppercase tracking-wide text-slate-700">${topicName} - ${tickets.length} in queue</h3>
+                            </div>
+                            <div class="overflow-x-auto">
+                                <table class="min-w-full divide-y divide-slate-200 text-sm">
+                                    <thead class="bg-slate-100">
+                                        <tr>
+                                            <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-600">Ticket #</th>
+                                            <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-600">Customer Name</th>
+                                            <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-600">Topic</th>
+                                            <th class="px-4 py-3 text-center text-xs font-semibold uppercase tracking-wide text-slate-600">Position</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="divide-y divide-slate-100">
+                                        ${rows}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+
+                queueDetailsEl.innerHTML = tableHTML;
+            }
 
             if (!data.agents || data.agents.length === 0) {
                 agentsDisplayEl.innerHTML = `
@@ -200,7 +443,52 @@
             }
         }
 
-        window.addEventListener('load', connectWebSocket);
+        // Auto-unlock audio on first user interaction (required by browser policy)
+        async function autoUnlockAudio() {
+            if (audioPermissionGranted !== true || audioUnlocked) return;
+            
+            try {
+                const notificationSound = '{{notificationSound}}' || 'happy-bell.wav';
+                const unlockerAudio = new Audio(`/sounds/${notificationSound}`);
+                unlockerAudio.muted = true;
+                unlockerAudio.volume = 0;
+                await unlockerAudio.play();
+                audioUnlocked = true;
+                console.log('Audio unlocked on user interaction');
+                // Remove listeners after successful unlock
+                document.removeEventListener('click', autoUnlockAudio);
+                document.removeEventListener('touchstart', autoUnlockAudio);
+                document.removeEventListener('keydown', autoUnlockAudio);
+            } catch (error) {
+                console.log('Audio unlock attempt:', error.name);
+            }
+        }
+
+        window.addEventListener('load', async () => {
+            connectWebSocket();
+            
+            // Check stored permission
+            const storedPermission = localStorage.getItem(AUDIO_PERMISSION_KEY);
+            
+            if (storedPermission === 'true') {
+                audioPermissionGranted = true;
+                console.log('Audio permission restored from storage');
+                
+                // Add listeners for auto-unlock on first interaction
+                document.addEventListener('click', autoUnlockAudio);
+                document.addEventListener('touchstart', autoUnlockAudio);
+                document.addEventListener('keydown', autoUnlockAudio);
+                if (!audioUnlocked) {
+                    showAudioInteractionNotice();
+                }
+            } else if (storedPermission === 'false') {
+                audioPermissionGranted = false;
+                console.log('Audio permission was previously denied');
+            } else {
+                // First time - show permission dialog
+                showAudioPermissionDialog();
+            }
+        });
 
         window.addEventListener('beforeunload', () => {
             if (ws) ws.close();

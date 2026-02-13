@@ -41,9 +41,18 @@ const stateManager = {
 const setupSockets = (wss, serverState) => {
     const broadcastToDisplay = () => {
         // Broadcast to display clients (ticket-queue page)
+        const queueSummary = ticketQueue.map(ticket => ({
+            id: ticket.id,
+            displayId: ticket.displayId,
+            name: ticket.name,
+            topic: ticket.topic,
+            topicId: ticket.topicId,
+            topicName: ticket.topicName
+        }));
         const displayData = {
             agents: agents,
-            queueRemaining: ticketQueue.length
+            queueRemaining: ticketQueue.length,
+            queue: queueSummary
         };
         wss.clients.forEach(client => {
             if (client.readyState === 1 && client.clientType === 'display') {
@@ -152,9 +161,18 @@ const setupSockets = (wss, serverState) => {
         ws.clientType = 'display';
         
         // Send initial state
+        const queueSummary = ticketQueue.map(ticket => ({
+            id: ticket.id,
+            displayId: ticket.displayId,
+            name: ticket.name,
+            topic: ticket.topic,
+            topicId: ticket.topicId,
+            topicName: ticket.topicName
+        }));
         ws.send(JSON.stringify({
             agents: agents,
-            queueRemaining: ticketQueue.length
+            queueRemaining: ticketQueue.length,
+            queue: queueSummary
         }));
     });
 
