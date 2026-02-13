@@ -50,7 +50,7 @@
                         <div class="text-xs uppercase tracking-wide text-emerald-700/70">In Queue</div>
                     </div>
                 </div>
-                <div id="queueDetails" class="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-3"></div>
+                <div id="queueDetails" class="mt-5 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3"></div>
             </section>
         </div>
     </div>
@@ -326,9 +326,32 @@
             const queue = Array.isArray(data.queue) ? data.queue : [];
             if (queue.length === 0) {
                 const hasQueue = (data.queueRemaining || 0) > 0;
+                const emptyMessage = hasQueue
+                    ? 'Queue details are syncing. Please refresh if this persists.'
+                    : 'No tickets waiting';
+                queueDetailsEl.className = `mt-5`;
                 queueDetailsEl.innerHTML = `
-                    <div class="rounded-xl border border-dashed border-slate-200 bg-slate-50 px-4 py-3 text-center text-sm text-slate-500 sm:col-span-2 lg:col-span-3">
-                        ${hasQueue ? 'Queue details are syncing. Please refresh if this persists.' : 'No tickets waiting'}
+                    <div class="mb-6 rounded-xl border border-slate-100 bg-white shadow-sm overflow-hidden">
+                        <div class="bg-slate-50 px-4 py-3 border-b border-slate-200">
+                            <h3 class="text-sm font-semibold uppercase tracking-wide text-slate-700">Queue</h3>
+                        </div>
+                        <div class="overflow-x-auto">
+                            <table class="min-w-full divide-y divide-slate-200 text-sm">
+                                <thead class="bg-slate-100">
+                                    <tr>
+                                        <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-600">Ticket #</th>
+                                        <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-600">Customer Name</th>
+                                        <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-600">Topic</th>
+                                        <th class="px-4 py-3 text-center text-xs font-semibold uppercase tracking-wide text-slate-600">Position</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-slate-100">
+                                    <tr>
+                                        <td class="px-4 py-6 text-center text-sm text-slate-500" colspan="4">${emptyMessage}</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
                 `;
             } else {

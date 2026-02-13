@@ -87,6 +87,12 @@ app.use(routes)
 // Setup WebSocket handlers and capture the socket methods
 const socketMethods = setupSockets(wss, serverState)
 
+if (socketMethods.initPersistence) {
+    socketMethods.initPersistence().catch((error) => {
+        console.error('Error initializing persistent agents:', error);
+    });
+}
+
 // Export socket methods so they can be used by routes
 module.exports.socketMethods = socketMethods
 

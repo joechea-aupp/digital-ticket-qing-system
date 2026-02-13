@@ -1,3 +1,5 @@
+const agentDb = require('../../db/agent');
+
 let ticketQueue = [];
 let topicCounters = {}; // Track ticket counter per topic {topicId: counter}
 let agents = []; // Array of agents/counters: {id, name, currentTicket, previousTicket, isPaused}
@@ -18,6 +20,26 @@ function getNextTicketId(topicId, prefix) {
     };
 }
 
+async function loadAgentsFromDb() {
+    try {
+        const dbAgents = await agentDb.getAllAgents();
+        agents = dbAgents.map(agent => ({
+            id: agent.id,
+            name: agent.name,
+            topicId: agent.topicId,
+            topicName: agent.topicName,
+            currentTicket: null,
+            previousTicket: null,
+            isPaused: agent.isPaused
+        }));
+
+        const maxId = dbAgents.reduce((max, agent) => Math.max(max, agent.id), 0);
+        agentCounter = Math.max(1, maxId + 1);
+    } catch (error) {
+        console.error('Error loading agents from database:', error);
+    }
+}
+
 // Export state management functions for use by routes
 const stateManager = {
     getAgents: () => agents,
@@ -32,6 +54,7 @@ const stateManager = {
     clearQueue: () => { ticketQueue = []; },
     clearAgents: () => { agents = []; },
     resetCounters: () => { topicCounters = {}; agentCounter = 1; },
+    resetTopicCounters: () => { topicCounters = {}; },
     getAgent: (agentId) => agents.find(a => a.id === agentId),
     findAgentIndex: (agentId) => agents.findIndex(a => a.id === agentId),
     // Broadcast functions will be set by setupSockets
@@ -293,18 +316,29 @@ const setupSockets = (wss, serverState) => {
             queueRemaining: ticketQueue.length
         }));
 
-        ws.on("message", (message) => {
+        ws.on("message", async (message) => {
             try {
                 const data = JSON.parse(message);
                 console.log(`Received message on /ws/admin:`, data);
                 
                 if (data.action === 'addAgent') {
                     // Add a new agent/counter
+                    const hasCustomName = Boolean(data.agentName && data.agentName.trim());
+                    const agentName = hasCustomName ? data.agentName.trim() : `Counter ${agentCounter++}`;
+                    const parsedTopicId = data.topicId ? parseInt(data.topicId, 10) : null;
+                    const topicId = Number.isNaN(parsedTopicId) ? null : parsedTopicId;
+                    const dbAgent = await agentDb.createAgent(
+                        agentName,
+                        topicId,
+                        data.topicName || null,
+                        false
+                    );
+
                     const newAgent = {
-                        id: agentCounter++,
-                        name: data.agentName || `Counter ${agentCounter - 1}`,
-                        topicId: data.topicId || null,
-                        topicName: data.topicName || null,
+                        id: dbAgent.id,
+                        name: dbAgent.name,
+                        topicId: dbAgent.topicId,
+                        topicName: dbAgent.topicName,
                         currentTicket: null,
                         previousTicket: null,
                         isPaused: false
@@ -328,6 +362,7 @@ const setupSockets = (wss, serverState) => {
                         if (agent.currentTicket) {
                             ticketQueue.unshift(agent.currentTicket);
                         }
+                        await agentDb.deleteAgent(agent.id);
                         agents.splice(agentIndex, 1);
                         broadcastAll();
                         ws.send(JSON.stringify({ 
@@ -432,6 +467,7 @@ const setupSockets = (wss, serverState) => {
                     }
 
                     agent.isPaused = Boolean(data.isPaused);
+                    await agentDb.updateAgentPause(agent.id, agent.isPaused);
                     broadcastAll();
                     ws.send(JSON.stringify({
                         success: true,
@@ -462,7 +498,8 @@ const setupSockets = (wss, serverState) => {
     return {
         broadcastAll,
         broadcastServerSessionReset,
-        stateManager
+        stateManager,
+        initPersistence: loadAgentsFromDb
     };
 }
 
