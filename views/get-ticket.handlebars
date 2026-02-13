@@ -261,14 +261,18 @@
                 }
             }
 
-            // Check if ticket has expired by comparing to last served ticket
-            if (highestServingNumericId === null && lastServedTicketId !== null) {
-                // Find the numeric ID of the last served ticket if it's in the same topic
-                const lastServedNumericId = agents
-                    .filter(agent => agent.previousTicket && agent.previousTicket.displayId === lastServedTicketId && agent.previousTicket.topicId === myTicket.topicId)
-                    .map(agent => agent.previousTicket.numericId)[0];
-                
-                if (lastServedNumericId && myTicket.numericId < lastServedNumericId) {
+            // Check if ticket has expired by comparing to ALL previously completed tickets
+            // Get the highest numericId from all previousTickets in the same topic
+            const previousTicketIds = agents
+                .filter(agent => agent.previousTicket && agent.previousTicket.topicId === myTicket.topicId)
+                .map(agent => agent.previousTicket.numericId);
+            
+            const highestPreviousNumericId = previousTicketIds.length > 0 ? Math.max(...previousTicketIds) : null;
+
+            // If there are no current tickets being served but there are completed tickets,
+            // check if this ticket has been passed
+            if (highestServingNumericId === null && highestPreviousNumericId !== null) {
+                if (myTicket.numericId <= highestPreviousNumericId) {
                     setTicketsRemainingDisplay({
                         value: 'Expired',
                         className: 'mt-2 text-2xl font-semibold text-slate-300',
