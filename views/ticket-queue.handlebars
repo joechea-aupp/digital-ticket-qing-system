@@ -43,58 +43,106 @@
         let ws = null;
         let previousAgentsState = [];
         let audioPermissionGranted = false;
+        const AUDIO_PERMISSION_KEY = 'audio-permission-granted';
+        let audioInitialized = false;
 
         const connectedClasses = ["bg-emerald-500", "animate-pulse"];
         const disconnectedClasses = ["bg-rose-500"];
 
-        // Initialize audio permission on first user interaction
-        function enableAudio() {
-            if (audioPermissionGranted) return;
+        // Try to play a silent sound to request permission
+        function initializeAudio() {
+            if (audioInitialized) return Promise.resolve(true);
             
             const notificationSound = '{{notificationSound}}' || 'happy-bell.wav';
             const audio = new Audio(`/sounds/${notificationSound}`);
-            audio.volume = 0.5;
+            audio.volume = 0;
             
-            audio.play()
+            return audio.play()
                 .then(() => {
                     audioPermissionGranted = true;
-                    audio.pause();
-                    console.log('Audio permission granted');
+                    audioInitialized = true;
+                    localStorage.setItem(AUDIO_PERMISSION_KEY, 'true');
+                    removeBanner();
+                    console.log('Audio initialized');
+                    return true;
                 })
                 .catch(error => {
-                    console.warn('Could not initialize audio:', error);
-                    audioPermissionGranted = false;
+                    console.log('Audio init failed:', error.name);
+                    return false;
                 });
+        }
+
+        // Show banner prompting user to enable audio
+        function showAudioBanner() {
+            if (document.getElementById('audio-banner')) return;
+            
+            const banner = document.createElement('div');
+            banner.id = 'audio-banner';
+            banner.style.cssText = `
+                position: fixed;
+                top: 0;
+                left: 0;
+                right: 0;
+                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                color: white;
+                padding: 12px 20px;
+                text-align: center;
+                font-size: 14px;
+                z-index: 1000;
+                box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+            `;
+            banner.innerHTML = `
+                <div style="display: flex; align-items: center; justify-content: center; gap: 10px;">
+                    <span>🔔 Click anywhere to enable notification sounds</span>
+                    <button onclick="document.getElementById('audio-banner').remove()" 
+                            style="background: rgba(255,255,255,0.2); color: white; border: none; padding: 4px 12px; border-radius: 4px; cursor: pointer; font-size: 12px;">
+                        Dismiss
+                    </button>
+                </div>
+            `;
+            document.body.insertBefore(banner, document.body.firstChild);
+        }
+
+        function removeBanner() {
+            const banner = document.getElementById('audio-banner');
+            if (banner) {
+                banner.style.transition = 'opacity 0.3s ease-out';
+                banner.style.opacity = '0';
+                setTimeout(() => banner.remove(), 300);
+            }
+        }
+
+        // Handle first user interaction
+        async function handleUserInteraction() {
+            const result = await initializeAudio();
+            if (result) {
+                document.removeEventListener('click', handleUserInteraction);
+                document.removeEventListener('touchstart', handleUserInteraction);
+                document.removeEventListener('keydown', handleUserInteraction);
+            }
         }
 
         // Play user's preferred notification sound
         function playDingSound() {
+            if (!audioPermissionGranted) {
+                showAudioBanner();
+                return;
+            }
+
             try {
                 const notificationSound = '{{notificationSound}}' || 'happy-bell.wav';
                 const audio = new Audio(`/sounds/${notificationSound}`);
-                audio.volume = 0.5; // Set volume to 50%
-                
-                const playPromise = audio.play();
-                if (playPromise !== undefined) {
-                    playPromise
-                        .then(() => {
-                            audioPermissionGranted = true;
-                        })
-                        .catch(error => {
-                            if (error.name === 'NotAllowedError') {
-                                console.warn('Audio playback not allowed. User interaction required. Please click somewhere on the page.');
-                            } else if (error.name === 'NotSupportedError') {
-                                console.warn('Audio format not supported:', error);
-                            } else {
-                                console.warn('Could not play ding sound:', error);
-                            }
-                        });
-                } else {
-                    // Older browsers that don't return a promise
-                    audioPermissionGranted = true;
-                }
+                audio.volume = 0.5;
+                audio.play().catch(error => {
+                    console.warn('Could not play sound:', error.name);
+                    if (error.name === 'NotAllowedError') {
+                        audioPermissionGranted = false;
+                        localStorage.removeItem(AUDIO_PERMISSION_KEY);
+                        showAudioBanner();
+                    }
+                });
             } catch (error) {
-                console.warn('Error creating audio element:', error);
+                console.warn('Error playing sound:', error);
             }
         }
 
@@ -238,15 +286,26 @@
             }
         }
 
-        window.addEventListener('load', connectWebSocket);
+        window.addEventListener('load', () => {
+            connectWebSocket();
+            
+            // Check if user previously granted audio permission
+            if (localStorage.getItem(AUDIO_PERMISSION_KEY) === 'true') {
+                audioPermissionGranted = true;
+                console.log('Audio permission restored from storage');
+            } else {
+                // First time, show banner
+                showAudioBanner();
+            }
+        });
 
         window.addEventListener('beforeunload', () => {
             if (ws) ws.close();
         });
 
         // Enable audio on first user interaction
-        document.addEventListener('click', enableAudio, { once: true });
-        document.addEventListener('touchstart', enableAudio, { once: true });
-        document.addEventListener('keydown', enableAudio, { once: true });
+        document.addEventListener('click', handleUserInteraction);
+        document.addEventListener('touchstart', handleUserInteraction);
+        document.addEventListener('keydown', handleUserInteraction);
     </script>
 </body>
