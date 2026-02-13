@@ -1,0 +1,670 @@
+<body class="min-h-screen bg-gradient-to-br from-slate-50 via-sky-50 to-emerald-50 font-['Space_Grotesk'] text-slate-900">
+    <div class="relative min-h-screen flex">
+        {{> sidebar
+            sidebarTitle="Reports"
+            sidebarSubtitle="Queue analytics & data"
+            showQueue=true
+            showDashboard=true
+            showTopic=true
+            showStations=true
+            showReport=true
+            isAdmin=isAdmin
+            queueClass="text-slate-600 hover:bg-slate-100 font-medium text-sm transition"
+            reportClass="bg-emerald-100 text-emerald-700 font-medium text-sm transition"
+            dashboardClass="text-slate-600 hover:bg-slate-100 font-medium text-sm transition"
+            topicClass="text-slate-600 hover:bg-slate-100 font-medium text-sm transition"
+            stationsClass="text-slate-600 hover:bg-slate-100 font-medium text-sm transition"
+        }}
+
+        <!-- Main Content -->
+        <div class="w-full md:ml-64 transition-all duration-300">
+            {{> header-bar headerTitle="Queue Reports" showProfile=true }}
+            <div class="pointer-events-none absolute inset-0">
+                <div class="absolute -top-20 right-4 h-48 w-48 rounded-full bg-emerald-200/60 blur-3xl"></div>
+                <div class="absolute -bottom-24 left-4 h-56 w-56 rounded-full bg-sky-200/70 blur-3xl"></div>
+            </div>
+
+            <main class="relative mx-auto w-full px-4 py-8 sm:px-6 lg:px-8">
+                <!-- Header -->
+                <header class="text-center mb-8">
+                    <h1 class="text-3xl font-semibold tracking-tight sm:text-4xl">Queue Reports</h1>
+                    <p class="mt-2 text-slate-600">View and analyze queue performance data</p>
+                </header>
+
+                <!-- Data Retention Info -->
+                <div class="mb-6 rounded-xl bg-blue-50 border border-blue-200 p-4 shadow-sm">
+                    <div class="flex items-start gap-3">
+                        <svg class="h-5 w-5 text-blue-600 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                        <div>
+                            <h3 class="text-sm font-semibold text-blue-900">Data Retention Policy</h3>
+                            <p class="mt-1 text-sm text-blue-800">Queue records are automatically deleted <strong>90 days</strong> after creation. The deletion date for each record is shown in the table below.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Filters Section -->
+                <div class="mb-8 rounded-2xl bg-white/90 p-6 shadow-lg ring-1 ring-slate-200/60">
+                    <h2 class="mb-4 text-lg font-semibold text-slate-900">Filters</h2>
+                    <form id="filterForm" class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                        <div>
+                            <label for="startDate" class="block text-sm font-medium text-slate-700 mb-1">Start Date</label>
+                            <input 
+                                type="date" 
+                                id="startDate" 
+                                name="startDate"
+                                class="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 placeholder-slate-500 focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
+                            />
+                        </div>
+                        <div>
+                            <label for="endDate" class="block text-sm font-medium text-slate-700 mb-1">End Date</label>
+                            <input 
+                                type="date" 
+                                id="endDate" 
+                                name="endDate"
+                                class="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 placeholder-slate-500 focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
+                            />
+                        </div>
+                        <div>
+                            <label for="filterTopic" class="block text-sm font-medium text-slate-700 mb-1">Topic</label>
+                            <select 
+                                id="filterTopic" 
+                                name="topicId"
+                                class="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
+                            >
+                                <option value="">All Topics</option>
+                                {{#each topics}}
+                                <option value="{{this.id}}">{{this.name}}</option>
+                                {{/each}}
+                            </select>
+                        </div>
+                        <div>
+                            <label for="filterAgent" class="block text-sm font-medium text-slate-700 mb-1">Agent</label>
+                            <select 
+                                id="filterAgent" 
+                                name="agentId"
+                                class="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
+                            >
+                                <option value="">All Agents</option>
+                                {{#each agents}}
+                                <option value="{{this.id}}">{{this.name}}</option>
+                                {{/each}}
+                            </select>
+                        </div>
+                    </form>
+                    <div class="mt-4 flex flex-wrap gap-2">
+                        <button 
+                            onclick="applyFilters()" 
+                            class="inline-flex items-center gap-2 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-emerald-700"
+                        >
+                            <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"></path>
+                            </svg>
+                            Apply Filters
+                        </button>
+                        <button 
+                            onclick="clearFilters()" 
+                            class="inline-flex items-center gap-2 rounded-lg border-2 border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 shadow-sm transition hover:bg-slate-100"
+                        >
+                            Clear Filters
+                        </button>
+                        <button 
+                            onclick="downloadCSV()" 
+                            class="inline-flex items-center gap-2 rounded-lg bg-sky-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-sky-700"
+                        >
+                            <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
+                            </svg>
+                            Download CSV
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Statistics Section -->
+                <div class="mb-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                    <div class="rounded-2xl bg-white/90 p-6 shadow-lg ring-1 ring-slate-200/60">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-sm font-medium text-slate-600">Total Tickets</p>
+                                <p class="mt-2 text-2xl font-bold text-slate-900" id="statTotal">0</p>
+                            </div>
+                            <div class="rounded-full bg-emerald-100 p-3">
+                                <svg class="h-6 w-6 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
+                                </svg>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="rounded-2xl bg-white/90 p-6 shadow-lg ring-1 ring-slate-200/60">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-sm font-medium text-slate-600">Avg Wait Time</p>
+                                <p class="mt-2 text-2xl font-bold text-slate-900" id="statAvgWait">0s</p>
+                            </div>
+                            <div class="rounded-full bg-sky-100 p-3">
+                                <svg class="h-6 w-6 text-sky-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 2m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                </svg>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="rounded-2xl bg-white/90 p-6 shadow-lg ring-1 ring-slate-200/60">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-sm font-medium text-slate-600">Total Agents</p>
+                                <p class="mt-2 text-2xl font-bold text-slate-900" id="statAgents">0</p>
+                            </div>
+                            <div class="rounded-full bg-purple-100 p-3">
+                                <svg class="h-6 w-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 12H9m6 0a6 6 0 11-12 0 6 6 0 0112 0z"></path>
+                                </svg>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="rounded-2xl bg-white/90 p-6 shadow-lg ring-1 ring-slate-200/60">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-sm font-medium text-slate-600">Total Topics</p>
+                                <p class="mt-2 text-2xl font-bold text-slate-900" id="statTopics">0</p>
+                            </div>
+                            <div class="rounded-full bg-rose-100 p-3">
+                                <svg class="h-6 w-6 text-rose-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"></path>
+                                </svg>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Records Table -->
+                <div class="mb-8 rounded-2xl bg-white/90 p-6 shadow-lg ring-1 ring-slate-200/60">
+                    <div class="flex items-center justify-between mb-4">
+                        <h2 class="text-lg font-semibold text-slate-900">Queue Records</h2>
+                        <div class="flex items-center gap-4">
+                            <div class="flex items-center gap-2">
+                                <label for="recordsPageSize" class="text-sm text-slate-600">Show:</label>
+                                <select 
+                                    id="recordsPageSize" 
+                                    onchange="changeRecordsPageSize()"
+                                    class="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-sm text-slate-900 focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
+                                >
+                                    <option value="5" selected>5</option>
+                                    <option value="10">10</option>
+                                    <option value="25">25</option>
+                                    <option value="50">50</option>
+                                    <option value="100">100</option>
+                                </select>
+                                <span class="text-sm text-slate-600">rows</span>
+                            </div>
+                            <div class="text-sm text-slate-500" id="recordCount">Loading...</div>
+                        </div>
+                    </div>
+                    
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-sm">
+                            <thead class="border-b border-slate-200 bg-slate-50">
+                                <tr>
+                                    <th class="px-4 py-3 text-left font-semibold text-slate-700">Ticket ID</th>
+                                    <th class="px-4 py-3 text-left font-semibold text-slate-700">Customer</th>
+                                    <th class="px-4 py-3 text-left font-semibold text-slate-700">Topic</th>
+                                    <th class="px-4 py-3 text-left font-semibold text-slate-700">Agent</th>
+                                    <th class="px-4 py-3 text-center font-semibold text-slate-700">Wait Time</th>
+                                    <th class="px-4 py-3 text-left font-semibold text-slate-700">Served At</th>
+                                    <th class="px-4 py-3 text-left font-semibold text-slate-700">
+                                        <span class="inline-flex items-center gap-1">
+                                            Will be deleted
+                                            <svg class="h-4 w-4 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" title="Records are automatically deleted after 90 days">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                            </svg>
+                                        </span>
+                                    </th>
+                                </tr>
+                            </thead>
+                            <tbody id="recordsTableBody" class="divide-y divide-slate-200">
+                                <tr>
+                                    <td colspan="7" class="px-4 py-8 text-center text-slate-500">Loading records...</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Pagination -->
+                    <div class="mt-4 flex items-center justify-between">
+                        <div class="text-sm text-slate-600" id="paginationInfo">Page 1</div>
+                        <div class="flex gap-2">
+                            <button 
+                                onclick="previousPage()" 
+                                class="rounded-lg border border-slate-300 px-3 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-100"
+                            >
+                                Previous
+                            </button>
+                            <button 
+                                onclick="nextPage()" 
+                                class="rounded-lg border border-slate-300 px-3 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-100"
+                            >
+                                Next
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Agent Performance Section -->
+                <div class="mb-8 rounded-2xl bg-white/90 p-6 shadow-lg ring-1 ring-slate-200/60">
+                    <div class="flex items-center justify-between mb-4">
+                        <h2 class="text-lg font-semibold text-slate-900">Performance by Agent</h2>
+                        <div class="flex items-center gap-2">
+                            <label for="agentRowsLimit" class="text-sm text-slate-600">Show:</label>
+                            <select 
+                                id="agentRowsLimit" 
+                                onchange="changeAgentRowsLimit()"
+                                class="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-sm text-slate-900 focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
+                            >
+                                <option value="5" selected>5</option>
+                                <option value="10">10</option>
+                                <option value="25">25</option>
+                                <option value="50">50</option>
+                                <option value="all">All</option>
+                            </select>
+                            <span class="text-sm text-slate-600">rows</span>
+                        </div>
+                    </div>
+                    <div id="agentPerformanceTable" class="overflow-x-auto">
+                        <table class="w-full text-sm">
+                            <thead class="border-b border-slate-200 bg-slate-50">
+                                <tr>
+                                    <th class="px-4 py-3 text-left font-semibold text-slate-700">Agent Name</th>
+                                    <th class="px-4 py-3 text-center font-semibold text-slate-700">Tickets Served</th>
+                                    <th class="px-4 py-3 text-center font-semibold text-slate-700">Avg Wait Time</th>
+                                    <th class="px-4 py-3 text-center font-semibold text-slate-700">Min Wait Time</th>
+                                    <th class="px-4 py-3 text-center font-semibold text-slate-700">Max Wait Time</th>
+                                </tr>
+                            </thead>
+                            <tbody id="agentPerformanceBody" class="divide-y divide-slate-200">
+                                <tr>
+                                    <td colspan="5" class="px-4 py-8 text-center text-slate-500">Loading...</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Topic Performance Section -->
+                <div class="rounded-2xl bg-white/90 p-6 shadow-lg ring-1 ring-slate-200/60">
+                    <div class="flex items-center justify-between mb-4">
+                        <h2 class="text-lg font-semibold text-slate-900">Performance by Topic</h2>
+                        <div class="flex items-center gap-2">
+                            <label for="topicRowsLimit" class="text-sm text-slate-600">Show:</label>
+                            <select 
+                                id="topicRowsLimit" 
+                                onchange="changeTopicRowsLimit()"
+                                class="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-sm text-slate-900 focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
+                            >
+                                <option value="5" selected>5</option>
+                                <option value="10">10</option>
+                                <option value="25">25</option>
+                                <option value="50">50</option>
+                                <option value="all">All</option>
+                            </select>
+                            <span class="text-sm text-slate-600">rows</span>
+                        </div>
+                    </div>
+                    <div id="topicPerformanceTable" class="overflow-x-auto">
+                        <table class="w-full text-sm">
+                            <thead class="border-b border-slate-200 bg-slate-50">
+                                <tr>
+                                    <th class="px-4 py-3 text-left font-semibold text-slate-700">Topic Name</th>
+                                    <th class="px-4 py-3 text-center font-semibold text-slate-700">Tickets Served</th>
+                                    <th class="px-4 py-3 text-center font-semibold text-slate-700">Avg Wait Time</th>
+                                    <th class="px-4 py-3 text-center font-semibold text-slate-700">Min Wait Time</th>
+                                    <th class="px-4 py-3 text-center font-semibold text-slate-700">Max Wait Time</th>
+                                </tr>
+                            </thead>
+                            <tbody id="topicPerformanceBody" class="divide-y divide-slate-200">
+                                <tr>
+                                    <td colspan="5" class="px-4 py-8 text-center text-slate-500">Loading...</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <script>
+        let currentPage = 1;
+        let pageSize = 5;
+        let allRecords = [];
+        let filteredRecords = [];
+        let agentRowsLimit = 5;
+        let topicRowsLimit = 5;
+        let allAgentData = [];
+        let allTopicData = [];
+
+        function formatSeconds(seconds) {
+            if (!seconds) return '0s';
+            if (seconds < 60) return seconds + 's';
+            const minutes = Math.floor(seconds / 60);
+            const secs = seconds % 60;
+            return `${minutes}m ${secs}s`;
+        }
+
+        function formatDateTime(dateTimeString) {
+            if (!dateTimeString) return '-';
+            const date = new Date(dateTimeString);
+            return date.toLocaleString();
+        }
+
+        function formatDeletionDate(createdAt) {
+            if (!createdAt) return '-';
+            const created = new Date(createdAt);
+            const deletionDate = new Date(created);
+            deletionDate.setDate(deletionDate.getDate() + 90);
+            
+            const now = new Date();
+            const daysUntilDeletion = Math.ceil((deletionDate - now) / (1000 * 60 * 60 * 24));
+            
+            if (daysUntilDeletion <= 0) {
+                return '<span class="text-red-600 font-medium">Expired</span>';
+            } else if (daysUntilDeletion <= 7) {
+                return `<span class="text-orange-600">${deletionDate.toLocaleDateString()} <span class="text-xs">(${daysUntilDeletion} days)</span></span>`;
+            } else {
+                return `<span class="text-slate-600">${deletionDate.toLocaleDateString()} <span class="text-xs">(${daysUntilDeletion} days)</span></span>`;
+            }
+        }
+
+        async function loadRecords() {
+            try {
+                const params = new URLSearchParams({
+                    page: currentPage,
+                    limit: pageSize
+                });
+
+                // Add filter params
+                const startDate = document.getElementById('startDate').value;
+                const endDate = document.getElementById('endDate').value;
+                const topicId = document.getElementById('filterTopic').value;
+                const agentId = document.getElementById('filterAgent').value;
+
+                if (startDate) params.append('startDate', startDate);
+                if (endDate) params.append('endDate', endDate);
+                if (topicId) params.append('topicId', topicId);
+                if (agentId) params.append('agentId', agentId);
+
+                const response = await fetch(`/api/queue-records?${params}`);
+                const data = await response.json();
+
+                if (!response.ok) throw new Error(data.error || 'Failed to load records');
+
+                allRecords = data.records;
+                filteredRecords = data.records;
+                
+                renderRecords();
+                updateStatistics(data.statistics);
+                updatePagination(data.total);
+                
+            } catch (error) {
+                console.error('Error loading records:', error);
+                document.getElementById('recordsTableBody').innerHTML = 
+                    `<tr><td colspan="6" class="px-4 py-8 text-center text-red-500">Error loading records: ${error.message}</td></tr>`;
+            }
+        }
+
+        async function loadAgentPerformance() {
+            try {
+                const params = new URLSearchParams();
+                const startDate = document.getElementById('startDate').value;
+                const endDate = document.getElementById('endDate').value;
+                const topicId = document.getElementById('filterTopic').value;
+
+                if (startDate) params.append('startDate', startDate);
+                if (endDate) params.append('endDate', endDate);
+                if (topicId) params.append('topicId', topicId);
+
+                const response = await fetch(`/api/queue-records/performance/agents?${params}`);
+                const data = await response.json();
+
+                if (!response.ok) throw new Error(data.error || 'Failed to load agent performance');
+
+                const tbody = document.getElementById('agentPerformanceBody');
+                if (data.agents.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="5" class="px-4 py-8 text-center text-slate-500">No data available</td></tr>';
+                    return;
+                }
+
+                // Group by agent name
+                const groupedAgents = data.agents.reduce((acc, agent) => {
+                    const name = agent.agent_name || 'Unknown';
+                    if (!acc[name]) {
+                        acc[name] = {
+                            service_count: 0,
+                            total_wait_time: 0,
+                            min_wait_time: agent.min_wait_time,
+                            max_wait_time: agent.max_wait_time,
+                            count: 0
+                        };
+                    }
+                    acc[name].service_count += parseInt(agent.service_count) || 0;
+                    acc[name].total_wait_time += (parseFloat(agent.avg_wait_time) || 0) * (parseInt(agent.service_count) || 0);
+                    acc[name].count += parseInt(agent.service_count) || 0;
+                    acc[name].min_wait_time = Math.min(acc[name].min_wait_time, agent.min_wait_time || Infinity);
+                    acc[name].max_wait_time = Math.max(acc[name].max_wait_time, agent.max_wait_time || 0);
+                    return acc;
+                }, {});
+
+                allAgentData = Object.entries(groupedAgents).map(([name, data]) => ({
+                    agent_name: name,
+                    service_count: data.service_count,
+                    avg_wait_time: data.count > 0 ? data.total_wait_time / data.count : 0,
+                    min_wait_time: data.min_wait_time === Infinity ? 0 : data.min_wait_time,
+                    max_wait_time: data.max_wait_time
+                }));
+
+                renderAgentPerformance();
+            } catch (error) {
+                console.error('Error loading agent performance:', error);
+            }
+        }
+
+        async function loadTopicPerformance() {
+            try {
+                const params = new URLSearchParams();
+                const startDate = document.getElementById('startDate').value;
+                const endDate = document.getElementById('endDate').value;
+
+                if (startDate) params.append('startDate', startDate);
+                if (endDate) params.append('endDate', endDate);
+
+                const response = await fetch(`/api/queue-records/performance/topics?${params}`);
+                const data = await response.json();
+
+                if (!response.ok) throw new Error(data.error || 'Failed to load topic performance');
+
+                const tbody = document.getElementById('topicPerformanceBody');
+                if (data.topics.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="5" class="px-4 py-8 text-center text-slate-500">No data available</td></tr>';
+                    return;
+                }
+
+                // Group by topic name
+                const groupedTopics = data.topics.reduce((acc, topic) => {
+                    const name = topic.topic_name || 'Unknown';
+                    if (!acc[name]) {
+                        acc[name] = {
+                            service_count: 0,
+                            total_wait_time: 0,
+                            min_wait_time: topic.min_wait_time,
+                            max_wait_time: topic.max_wait_time,
+                            count: 0
+                        };
+                    }
+                    acc[name].service_count += parseInt(topic.service_count) || 0;
+                    acc[name].total_wait_time += (parseFloat(topic.avg_wait_time) || 0) * (parseInt(topic.service_count) || 0);
+                    acc[name].count += parseInt(topic.service_count) || 0;
+                    acc[name].min_wait_time = Math.min(acc[name].min_wait_time, topic.min_wait_time || Infinity);
+                    acc[name].max_wait_time = Math.max(acc[name].max_wait_time, topic.max_wait_time || 0);
+                    return acc;
+                }, {});
+
+                allTopicData = Object.entries(groupedTopics).map(([name, data]) => ({
+                    topic_name: name,
+                    service_count: data.service_count,
+                    avg_wait_time: data.count > 0 ? data.total_wait_time / data.count : 0,
+                    min_wait_time: data.min_wait_time === Infinity ? 0 : data.min_wait_time,
+                    max_wait_time: data.max_wait_time
+                }));
+
+                renderTopicPerformance();
+            } catch (error) {
+                console.error('Error loading topic performance:', error);
+            }
+        }
+
+        function renderRecords() {
+            const tbody = document.getElementById('recordsTableBody');
+            if (allRecords.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="7" class="px-4 py-8 text-center text-slate-500">No records found</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = allRecords.map(record => `
+                <tr class="hover:bg-slate-50 transition">
+                    <td class="px-4 py-3 font-mono font-semibold text-emerald-600">${record.ticket_display_id}</td>
+                    <td class="px-4 py-3 text-slate-900">${record.ticket_name}</td>
+                    <td class="px-4 py-3 text-slate-700">${record.topic_name || '-'}</td>
+                    <td class="px-4 py-3 text-slate-700">${record.agent_name || '-'}</td>
+                    <td class="px-4 py-3 text-center text-slate-700"><span class="inline-block rounded-full bg-sky-100 px-3 py-1 text-sky-700 font-medium">${formatSeconds(record.wait_time_seconds)}</span></td>
+                    <td class="px-4 py-3 text-slate-600 text-xs">${formatDateTime(record.served_at)}</td>
+                    <td class="px-4 py-3 text-xs">${formatDeletionDate(record.created_at)}</td>
+                </tr>
+            `).join('');
+        }
+
+        function updateStatistics(stats) {
+            document.getElementById('statTotal').textContent = stats.total_tickets || 0;
+            document.getElementById('statAvgWait').textContent = formatSeconds(Math.round(stats.avg_wait_time || 0));
+            document.getElementById('statAgents').textContent = stats.total_agents || 0;
+            document.getElementById('statTopics').textContent = stats.total_topics || 0;
+        }
+
+        function updatePagination(total) {
+            const totalPages = Math.ceil(total / pageSize);
+            document.getElementById('recordCount').textContent = `Total: ${total} records`;
+            document.getElementById('paginationInfo').textContent = `Page ${currentPage} of ${totalPages || 1}`;
+        }
+
+        function nextPage() {
+            currentPage++;
+            loadRecords();
+        }
+
+        function previousPage() {
+            if (currentPage > 1) {
+                currentPage--;
+                loadRecords();
+            }
+        }
+
+        function applyFilters() {
+            currentPage = 1;
+            loadRecords();
+            loadAgentPerformance();
+            loadTopicPerformance();
+        }
+
+        function clearFilters() {
+            document.getElementById('filterForm').reset();
+            currentPage = 1;
+            loadRecords();
+            loadAgentPerformance();
+            loadTopicPerformance();
+        }
+
+        function changeRecordsPageSize() {
+            pageSize = parseInt(document.getElementById('recordsPageSize').value);
+            currentPage = 1;
+            loadRecords();
+        }
+
+        function changeAgentRowsLimit() {
+            const value = document.getElementById('agentRowsLimit').value;
+            agentRowsLimit = value === 'all' ? Infinity : parseInt(value);
+            renderAgentPerformance();
+        }
+
+        function changeTopicRowsLimit() {
+            const value = document.getElementById('topicRowsLimit').value;
+            topicRowsLimit = value === 'all' ? Infinity : parseInt(value);
+            renderTopicPerformance();
+        }
+
+        function renderAgentPerformance() {
+            const tbody = document.getElementById('agentPerformanceBody');
+            if (allAgentData.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="5" class="px-4 py-8 text-center text-slate-500">No data available</td></tr>';
+                return;
+            }
+
+            const displayData = agentRowsLimit === Infinity ? allAgentData : allAgentData.slice(0, agentRowsLimit);
+            tbody.innerHTML = displayData.map(agent => `
+                <tr class="hover:bg-slate-50">
+                    <td class="px-4 py-3 text-slate-900 font-medium">${agent.agent_name}</td>
+                    <td class="px-4 py-3 text-center text-slate-700">${agent.service_count}</td>
+                    <td class="px-4 py-3 text-center text-slate-700">${formatSeconds(Math.round(agent.avg_wait_time || 0))}</td>
+                    <td class="px-4 py-3 text-center text-slate-700">${formatSeconds(agent.min_wait_time || 0)}</td>
+                    <td class="px-4 py-3 text-center text-slate-700">${formatSeconds(agent.max_wait_time || 0)}</td>
+                </tr>
+            `).join('');
+        }
+
+        function renderTopicPerformance() {
+            const tbody = document.getElementById('topicPerformanceBody');
+            if (allTopicData.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="5" class="px-4 py-8 text-center text-slate-500">No data available</td></tr>';
+                return;
+            }
+
+            const displayData = topicRowsLimit === Infinity ? allTopicData : allTopicData.slice(0, topicRowsLimit);
+            tbody.innerHTML = displayData.map(topic => `
+                <tr class="hover:bg-slate-50">
+                    <td class="px-4 py-3 text-slate-900 font-medium">${topic.topic_name || 'Unknown'}</td>
+                    <td class="px-4 py-3 text-center text-slate-700">${topic.service_count}</td>
+                    <td class="px-4 py-3 text-center text-slate-700">${formatSeconds(Math.round(topic.avg_wait_time || 0))}</td>
+                    <td class="px-4 py-3 text-center text-slate-700">${formatSeconds(topic.min_wait_time || 0)}</td>
+                    <td class="px-4 py-3 text-center text-slate-700">${formatSeconds(topic.max_wait_time || 0)}</td>
+                </tr>
+            `).join('');
+        }
+
+        async function downloadCSV() {
+            try {
+                const params = new URLSearchParams({ export: 'csv' });
+                const startDate = document.getElementById('startDate').value;
+                const endDate = document.getElementById('endDate').value;
+                const topicId = document.getElementById('filterTopic').value;
+                const agentId = document.getElementById('filterAgent').value;
+
+                if (startDate) params.append('startDate', startDate);
+                if (endDate) params.append('endDate', endDate);
+                if (topicId) params.append('topicId', topicId);
+                if (agentId) params.append('agentId', agentId);
+
+                window.location.href = `/api/queue-records/download?${params}`;
+            } catch (error) {
+                console.error('Error downloading CSV:', error);
+                alert('Failed to download CSV');
+            }
+        }
+
+        // Load data on page load
+        window.addEventListener('load', () => {
+            loadRecords();
+            loadAgentPerformance();
+            loadTopicPerformance();
+        });
+    </script>
+</body>

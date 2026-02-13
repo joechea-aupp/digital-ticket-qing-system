@@ -1,4 +1,38 @@
 const agentDb = require('../../db/agent');
+const queueRecordDb = require('../../db/queue-record');
+
+async function saveQueueRecordForTicket(ticket, agent) {
+    if (!ticket || !agent) {
+        return;
+    }
+
+    try {
+        const ticketTime = new Date(ticket.time);
+        const servedTime = new Date();
+        const waitTime = Math.floor((servedTime - ticketTime) / 1000);
+        const topicName = ticket.topicName || (ticket.topic && ticket.topic.name) || null;
+
+        const ticketToSave = {
+            displayId: ticket.displayId,
+            numericId: ticket.numericId,
+            name: ticket.name,
+            topicId: ticket.topicId,
+            topicName: topicName,
+            time: ticket.time
+        };
+
+        await queueRecordDb.createQueueRecord(
+            ticketToSave,
+            agent.id,
+            agent.name,
+            servedTime.toISOString(),
+            waitTime
+        );
+        console.log(`Queue record saved for ticket ${ticket.displayId}`);
+    } catch (err) {
+        console.error('Error saving queue record:', err);
+    }
+}
 
 let ticketQueue = [];
 let topicCounters = {}; // Track ticket counter per topic {topicId: counter}
@@ -282,6 +316,7 @@ const setupSockets = (wss, serverState) => {
                         name: data.name,
                         topic: topic,
                         topicId: topic.id || 0,
+                        topicName: topic.name || null, // Explicitly set topic name
                         time: new Date().toISOString()
                     };
                     ticketQueue.push(newTicket);
@@ -389,6 +424,8 @@ const setupSockets = (wss, serverState) => {
                     }
                     
                     if (ticketQueue.length > 0) {
+                        const previousTicket = agent.currentTicket;
+
                         // Check if agent has a topic assigned
                         if (agent.topicId) {
                             // Find the next ticket with matching topic
@@ -408,6 +445,10 @@ const setupSockets = (wss, serverState) => {
                             agent.isPaused = false;
                             agent.previousTicket = agent.currentTicket;
                             agent.currentTicket = ticketQueue.shift();
+                        }
+
+                        if (previousTicket) {
+                            await saveQueueRecordForTicket(previousTicket, agent);
                         }
                         broadcastAll();
                     } else {
@@ -449,6 +490,8 @@ const setupSockets = (wss, serverState) => {
                         }));
                         return;
                     }
+                    
+                    await saveQueueRecordForTicket(agent.currentTicket, agent);
                     
                     // Mark as previous ticket and clear current (does NOT return to queue)
                     agent.previousTicket = agent.currentTicket;
