@@ -268,4 +268,56 @@ router.post("/station/:id/toggle-pause", requireAuth, async (req, res) => {
     });
 });
 
+// Complete current ticket (mark as served, without getting next one)
+router.post("/station/:id/complete", requireAuth, (req, res) => {
+    try {
+        const state = getState();
+        const stationId = parseInt(req.params.id);
+        
+        if (isNaN(stationId)) {
+            return res.status(400).json({
+                success: false,
+                error: "Invalid station ID"
+            });
+        }
+        
+        const agent = state.agents.find(a => a.id === stationId);
+        
+        if (!agent) {
+            return res.status(404).json({
+                success: false,
+                error: "Station not found"
+            });
+        }
+        
+        if (!agent.currentTicket) {
+            return res.status(400).json({
+                success: false,
+                error: "No current ticket to complete"
+            });
+        }
+        
+        agent.previousTicket = agent.currentTicket;
+        agent.currentTicket = null;
+        
+        // Broadcast to all connected clients
+        if (setupSockets.stateManager && setupSockets.stateManager.broadcastAll) {
+            setupSockets.stateManager.broadcastAll();
+        }
+        
+        res.json({
+            success: true,
+            message: "Ticket marked as completed",
+            station: agent,
+            queueRemaining: state.ticketQueue.length
+        });
+    } catch (error) {
+        console.error('Error completing ticket:', error);
+        res.status(500).json({
+            success: false,
+            error: "Failed to complete ticket: " + error.message
+        });
+    }
+});
+
 module.exports = router

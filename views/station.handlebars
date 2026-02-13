@@ -64,8 +64,9 @@
 
             <div class="mt-8 flex flex-col gap-3 sm:flex-row">
                 <button id="nextTicketBtn" class="flex-1 rounded-lg bg-emerald-600 px-4 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-emerald-700 disabled:bg-slate-300 disabled:cursor-not-allowed disabled:opacity-50" onclick="nextTicket()">Next Ticket</button>
+                <button id="completeBtn" class="flex-1 rounded-lg bg-indigo-600 px-4 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-indigo-700 disabled:bg-slate-300 disabled:cursor-not-allowed disabled:opacity-50" onclick="completeTicket()">Complete</button>
                 <button id="pauseBtn" class="flex-1 rounded-lg bg-sky-600 px-4 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-sky-700" onclick="togglePause()">Pause</button>
-                <button class="flex-1 rounded-lg bg-rose-600 px-4 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-rose-700" onclick="clearCurrent()">Clear Current</button>
+                <button id="clearBtn" class="flex-1 rounded-lg bg-rose-600 px-4 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-rose-700 disabled:bg-slate-300 disabled:cursor-not-allowed disabled:opacity-50" onclick="clearCurrent()">Clear Current</button>
                 <button class="flex-1 rounded-lg border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-600 shadow-sm transition hover:bg-slate-50" onclick="location.href='/stations'">Back to Stations</button>
             </div>
         </main>
@@ -77,7 +78,7 @@
 
         function initWebSocket() {
             const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-            socket = new WebSocket(protocol + '//' + window.location.host);
+            socket = new WebSocket(protocol + '//' + window.location.host + '/ws/stations');
 
             socket.onopen = () => {
                 console.log('WebSocket connected');
@@ -169,6 +170,18 @@
                     if (nextTicketBtn) {
                         nextTicketBtn.disabled = !data.hasAvailableTickets;
                     }
+
+                    // Update Complete button state
+                    const completeBtn = document.getElementById('completeBtn');
+                    if (completeBtn) {
+                        completeBtn.disabled = !station.currentTicket;
+                    }
+
+                    // Update Clear button state
+                    const clearBtn = document.getElementById('clearBtn');
+                    if (clearBtn) {
+                        clearBtn.disabled = !station.currentTicket;
+                    }
                 }
             } catch (error) {
                 console.error('Failed to refresh station:', error);
@@ -208,6 +221,26 @@
                     refreshStation();
                 } else {
                     showMessage(data.error || 'Failed to clear current ticket', 'error');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                showMessage('Error: ' + error.message, 'error');
+            }
+        }
+
+        async function completeTicket() {
+            try {
+                const response = await fetch(`/station/${stationId}/complete`, {
+                    method: 'POST'
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    showMessage('Ticket marked as completed', 'success');
+                    refreshStation();
+                } else {
+                    showMessage(data.error || 'Failed to complete ticket', 'error');
                 }
             } catch (error) {
                 console.error('Error:', error);
