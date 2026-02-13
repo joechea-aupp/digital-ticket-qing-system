@@ -54,6 +54,7 @@ const stateManager = {
     clearQueue: () => { ticketQueue = []; },
     clearAgents: () => { agents = []; },
     resetCounters: () => { topicCounters = {}; agentCounter = 1; },
+    resetTopicCounters: () => { topicCounters = {}; },
     getAgent: (agentId) => agents.find(a => a.id === agentId),
     findAgentIndex: (agentId) => agents.findIndex(a => a.id === agentId),
     // Broadcast functions will be set by setupSockets
