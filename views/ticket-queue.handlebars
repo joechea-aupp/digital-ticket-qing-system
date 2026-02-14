@@ -67,6 +67,7 @@
     <script>
         let ws = null;
         let previousAgentsState = [];
+        let hasInitializedAgentState = false;
         let audioUnlocked = false;
         const connectedClasses = ["bg-emerald-500", "animate-pulse"];
         const disconnectedClasses = ["bg-rose-500"];
@@ -202,13 +203,18 @@
             const queueRemainingEl = document.getElementById('queueRemaining');
             const queueDetailsEl = document.getElementById('queueDetails');
 
-            // Check for new ticket assignment before updating display
-            if (checkForNewTicketAssignment(data.agents)) {
-                playDingSound();
+            // Skip sound on initial load; only play when a new assignment happens after initialization.
+            if (hasInitializedAgentState) {
+                if (checkForNewTicketAssignment(data.agents)) {
+                    playDingSound();
+                }
             }
 
             // Update previous state for next comparison
             previousAgentsState = JSON.parse(JSON.stringify(data.agents || []));
+            if (!hasInitializedAgentState) {
+                hasInitializedAgentState = true;
+            }
 
             queueRemainingEl.textContent = data.queueRemaining || 0;
 
