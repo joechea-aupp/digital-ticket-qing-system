@@ -220,18 +220,6 @@
                     </summary>
                     <div class="divide-y divide-slate-200 border-t border-slate-200">
                         <div class="flex items-start justify-between gap-6 px-4 py-4">
-                            <label for="topicIsDefault" class="cursor-pointer">
-                                <span class="block text-sm font-semibold text-slate-700">Set as Default Topic</span>
-                                <span class="block text-xs text-slate-500 mt-0.5">Tickets will be assigned to this topic by default.</span>
-                            </label>
-                            <input 
-                                type="checkbox" 
-                                id="topicIsDefault" 
-                                class="mt-1 h-4 w-4 rounded border-slate-300 text-emerald-600 transition focus:ring-2 focus:ring-emerald-500"
-                            >
-                        </div>
-
-                        <div class="flex items-start justify-between gap-6 px-4 py-4">
                             <label for="topicAutoUseDeviceName" class="cursor-pointer">
                                 <span class="block text-sm font-semibold text-slate-700">Auto-use Device Name</span>
                                 <span class="block text-xs text-slate-500 mt-0.5">Use device name automatically instead of asking customers to enter a name.</span>
@@ -310,15 +298,13 @@
                 document.getElementById('topicName').value = topic.name;
                 document.getElementById('topicPrefixId').value = topic.prefix_id;
                 document.getElementById('topicDescription').value = topic.description || '';
-                const isDefault = Boolean(topic.is_default);
                 const autoUseDeviceName = Boolean(topic.auto_use_device_name);
                 const allowNotificationSound = Boolean(topic.allow_notification_sound);
-                document.getElementById('topicIsDefault').checked = isDefault;
                 document.getElementById('topicAutoUseDeviceName').checked = autoUseDeviceName;
                 document.getElementById('topicAllowNotificationSound').checked = allowNotificationSound;
                 document.getElementById('modalTitle').textContent = 'Edit Topic';
                 document.getElementById('modalError').classList.add('hidden');
-                if (isDefault || autoUseDeviceName || allowNotificationSound) {
+                if (autoUseDeviceName || allowNotificationSound) {
                     document.getElementById('topicOptions').setAttribute('open', 'open');
                 } else {
                     document.getElementById('topicOptions').removeAttribute('open');
@@ -338,49 +324,12 @@
         const name = document.getElementById('topicName').value.trim();
         const prefix_id = document.getElementById('topicPrefixId').value.trim().toUpperCase();
         const description = document.getElementById('topicDescription').value.trim();
-        const is_default = document.getElementById('topicIsDefault').checked;
         const auto_use_device_name = document.getElementById('topicAutoUseDeviceName').checked;
         const allow_notification_sound = document.getElementById('topicAllowNotificationSound').checked;
 
         if (!name || !prefix_id) {
             showError('Name and Prefix ID are required');
             return;
-        }
-
-        // Frontend validation: Check if setting as default
-        if (is_default && !editingTopicId) {
-            // Check if a default topic already exists
-            try {
-                const defaultTopicResponse = await fetch('/api/topics/default');
-                if (defaultTopicResponse.ok) {
-                    const defaultTopic = await defaultTopicResponse.json();
-                    const confirmed = confirm(`There is already a default topic: "${defaultTopic.name}". Setting this as default will replace it. Continue?`);
-                    if (!confirmed) {
-                        return;
-                    }
-                }
-            } catch (error) {
-                // No default topic exists (404), proceed
-                console.log('No existing default topic found');
-            }
-        } else if (is_default && editingTopicId) {
-            // Editing an existing topic and setting it as default
-            try {
-                const defaultTopicResponse = await fetch('/api/topics/default');
-                if (defaultTopicResponse.ok) {
-                    const defaultTopic = await defaultTopicResponse.json();
-                    // Only warn if the current default is different from the topic being edited
-                    if (defaultTopic.id !== parseInt(editingTopicId)) {
-                        const confirmed = confirm(`There is already a default topic: "${defaultTopic.name}". Setting this as default will replace it. Continue?`);
-                        if (!confirmed) {
-                            return;
-                        }
-                    }
-                }
-            } catch (error) {
-                // No default topic exists (404), proceed
-                console.log('No existing default topic found');
-            }
         }
 
         try {
@@ -392,7 +341,7 @@
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify({ name, prefix_id, description, is_default, auto_use_device_name, allow_notification_sound })
+                body: JSON.stringify({ name, prefix_id, description, is_default: false, auto_use_device_name, allow_notification_sound })
             });
 
             if (!response.ok) {
