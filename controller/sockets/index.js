@@ -516,6 +516,40 @@ const setupSockets = (wss, serverState) => {
                         success: true,
                         message: agent.isPaused ? 'Counter paused' : 'Counter resumed'
                     }));
+                } else if (data.action === 'updateAgentTopic') {
+                    const agentId = data.agentId;
+                    const agent = agents.find(a => a.id === agentId);
+
+                    if (!agent) {
+                        ws.send(JSON.stringify({
+                            success: false,
+                            error: 'Agent not found'
+                        }));
+                        return;
+                    }
+
+                    if (agent.currentTicket) {
+                        ws.send(JSON.stringify({
+                            success: false,
+                            error: 'Topic can only be changed when there is no active ticket being served'
+                        }));
+                        return;
+                    }
+
+                    const parsedTopicId = data.topicId ? parseInt(data.topicId, 10) : null;
+                    const topicId = Number.isNaN(parsedTopicId) ? null : parsedTopicId;
+                    const topicName = data.topicName || null;
+
+                    const updatedAgent = await agentDb.updateAgentTopic(agent.id, topicId, topicName);
+                    agent.topicId = updatedAgent.topicId;
+                    agent.topicName = updatedAgent.topicName;
+
+                    broadcastAll();
+                    ws.send(JSON.stringify({
+                        success: true,
+                        message: `Topic updated for ${agent.name}`,
+                        agent: agent
+                    }));
                 }
             } catch (e) {
                 console.error('Error processing admin message:', e);
