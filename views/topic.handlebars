@@ -125,8 +125,8 @@
 </div>
 
 <!-- Topic Modal -->
-<div id="topicModal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-sm">
-    <div class="w-full max-w-md rounded-2xl bg-white shadow-2xl ring-1 ring-slate-200/60">
+<div id="topicModal" class="hidden fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-slate-900/50 py-8 backdrop-blur-sm">
+    <div class="w-full max-w-md rounded-2xl bg-white shadow-2xl ring-1 ring-slate-200/60 max-h-[90vh] flex flex-col">
         <!-- Modal Header -->
         <div class="border-b border-slate-200 px-8 py-6">
             <h2 id="modalTitle" class="text-2xl font-bold tracking-tight text-slate-900">Add New Topic</h2>
@@ -134,7 +134,7 @@
         </div>
 
         <!-- Modal Content -->
-        <div class="px-8 py-6">
+        <div class="px-8 py-6 overflow-y-auto">
             <div id="modalError" class="mb-4 hidden rounded-lg border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700"></div>
             
             <form id="topicForm" class="space-y-5">
