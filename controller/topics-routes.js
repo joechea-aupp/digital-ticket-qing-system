@@ -45,7 +45,7 @@ router.get('/api/topics/:id', async (req, res) => {
 // Create new topic (admin only)
 router.post('/api/topics', requireAdmin, async (req, res) => {
     try {
-        const { name, prefix_id, description, is_default, auto_use_device_name } = req.body;
+        const { name, prefix_id, description, is_default, auto_use_device_name, allow_notification_sound } = req.body;
 
         if (!name || !prefix_id) {
             return res.status(400).json({ error: 'Name and prefix_id are required' });
@@ -56,7 +56,8 @@ router.post('/api/topics', requireAdmin, async (req, res) => {
             prefix_id, 
             description || '', 
             is_default || false, 
-            auto_use_device_name || false
+            auto_use_device_name || false,
+            allow_notification_sound || false
         );
         res.status(201).json(topic);
     } catch (error) {
@@ -74,7 +75,7 @@ router.post('/api/topics', requireAdmin, async (req, res) => {
 // Update topic (admin only)
 router.put('/api/topics/:id', requireAdmin, async (req, res) => {
     try {
-        const { name, prefix_id, description, is_default, auto_use_device_name } = req.body;
+        const { name, prefix_id, description, is_default, auto_use_device_name, allow_notification_sound } = req.body;
 
         if (!name || !prefix_id) {
             return res.status(400).json({ error: 'Name and prefix_id are required' });
@@ -86,7 +87,8 @@ router.put('/api/topics/:id', requireAdmin, async (req, res) => {
             prefix_id, 
             description || '', 
             is_default || false, 
-            auto_use_device_name || false
+            auto_use_device_name || false,
+            allow_notification_sound || false
         );
         res.json(topic);
     } catch (error) {

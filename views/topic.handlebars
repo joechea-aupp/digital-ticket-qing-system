@@ -214,6 +214,21 @@
                         </div>
                     </label>
                 </div>
+
+                <!-- Notification Sound Toggle -->
+                <div class="rounded-lg border border-slate-200 bg-slate-50/50 p-4">
+                    <label class="flex items-center gap-3 cursor-pointer">
+                        <input 
+                            type="checkbox" 
+                            id="topicAllowNotificationSound" 
+                            class="h-4 w-4 rounded border-slate-300 text-emerald-600 transition focus:ring-2 focus:ring-emerald-500"
+                        >
+                        <div>
+                            <span class="block text-sm font-semibold text-slate-700">Allow Notification Sound</span>
+                            <span class="block text-xs text-slate-500 mt-0.5">Let customers enable a sound alert when it is their turn</span>
+                        </div>
+                    </label>
+                </div>
             </form>
         </div>
 
@@ -269,6 +284,7 @@
                 document.getElementById('topicDescription').value = topic.description || '';
                 document.getElementById('topicIsDefault').checked = topic.is_default;
                 document.getElementById('topicAutoUseDeviceName').checked = topic.auto_use_device_name || false;
+                document.getElementById('topicAllowNotificationSound').checked = topic.allow_notification_sound || false;
                 document.getElementById('modalTitle').textContent = 'Edit Topic';
                 document.getElementById('modalError').classList.add('hidden');
                 document.getElementById('topicModal').classList.remove('hidden');
@@ -288,6 +304,7 @@
         const description = document.getElementById('topicDescription').value.trim();
         const is_default = document.getElementById('topicIsDefault').checked;
         const auto_use_device_name = document.getElementById('topicAutoUseDeviceName').checked;
+        const allow_notification_sound = document.getElementById('topicAllowNotificationSound').checked;
 
         if (!name || !prefix_id) {
             showError('Name and Prefix ID are required');
@@ -303,7 +320,7 @@
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify({ name, prefix_id, description, is_default, auto_use_device_name })
+                body: JSON.stringify({ name, prefix_id, description, is_default, auto_use_device_name, allow_notification_sound })
             });
 
             if (!response.ok) {
