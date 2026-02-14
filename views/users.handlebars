@@ -53,9 +53,13 @@
                                 </td>
                                 <td class="px-6 py-4">
                                     <div class="flex flex-wrap gap-2">
-                                        <button class="rounded-lg bg-slate-900 px-3 py-1 text-xs font-semibold text-white shadow-sm transition hover:bg-slate-800" onclick="editUser({{this.id}})">Edit</button>
+                                        <button class="rounded-lg bg-slate-900 px-3 py-1 text-xs font-semibold text-white shadow-sm transition hover:bg-slate-800" onclick="editUser({{this.id}}, {{this.isDefaultAdmin}})">Edit</button>
                                         <button class="rounded-lg bg-amber-500 px-3 py-1 text-xs font-semibold text-white shadow-sm transition hover:bg-amber-600" onclick="showResetPasswordModal({{this.id}}, '{{this.username}}')">Reset Password</button>
+                                        {{#if this.isDefaultAdmin}}
+                                        <button class="rounded-lg bg-rose-500 px-3 py-1 text-xs font-semibold text-white shadow-sm opacity-60 cursor-not-allowed" disabled title="Default admin account cannot be deleted">Delete</button>
+                                        {{else}}
                                         <button class="rounded-lg bg-rose-500 px-3 py-1 text-xs font-semibold text-white shadow-sm transition hover:bg-rose-600" onclick="deleteUser({{this.id}}, '{{this.username}}')">Delete</button>
+                                        {{/if}}
                                     </div>
                                 </td>
                             </tr>
@@ -80,6 +84,9 @@
         <!-- Modal Content -->
         <div class="px-8 py-6">
             <div id="modalError" class="mb-4 hidden rounded-lg border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700"></div>
+            <div id="defaultAdminNote" class="mb-4 hidden rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-700">
+                Default admin account role and username cannot be changed.
+            </div>
 
             <form id="userForm" class="space-y-5">
                 <!-- Username Field -->
@@ -221,15 +228,22 @@
 
 <script>
     let editingUserId = null;
+    let editingDefaultAdmin = false;
     let resettingUserId = null;
 
     function showCreateUserModal() {
         editingUserId = null;
+        editingDefaultAdmin = false;
         document.getElementById('modalTitle').textContent = 'Create New User';
         document.getElementById('modalTitle').nextElementSibling.textContent = 'Add a new admin or agent account';
         document.getElementById('submitBtn').textContent = 'Create User';
         document.getElementById('passwordField').style.display = 'block';
         document.getElementById('password').required = true;
+        document.getElementById('username').disabled = false;
+        document.getElementById('role').disabled = false;
+        document.getElementById('submitBtn').disabled = false;
+        document.getElementById('submitBtn').classList.remove('opacity-60', 'cursor-not-allowed');
+        document.getElementById('defaultAdminNote').classList.add('hidden');
         document.getElementById('userForm').reset();
         document.getElementById('modalError').classList.add('hidden');
         document.getElementById('userModal').classList.remove('hidden');
@@ -238,16 +252,21 @@
     function closeUserModal() {
         document.getElementById('userModal').classList.add('hidden');
         editingUserId = null;
+        editingDefaultAdmin = false;
         document.getElementById('userForm').reset();
         document.getElementById('modalError').classList.add('hidden');
+        document.getElementById('submitBtn').disabled = false;
+        document.getElementById('submitBtn').classList.remove('opacity-60', 'cursor-not-allowed');
+        document.getElementById('defaultAdminNote').classList.add('hidden');
     }
 
-    async function editUser(userId) {
+    async function editUser(userId, isDefaultAdmin) {
         try {
             const response = await fetch(`/api/users/${userId}`);
             const user = await response.json();
             
             editingUserId = userId;
+            editingDefaultAdmin = Boolean(isDefaultAdmin);
             document.getElementById('modalTitle').textContent = 'Edit User';
             document.getElementById('modalTitle').nextElementSibling.textContent = 'Update user account information';
             document.getElementById('submitBtn').textContent = 'Update User';
@@ -255,6 +274,12 @@
             document.getElementById('password').required = false;
             document.getElementById('username').value = user.username;
             document.getElementById('role').value = user.role;
+            document.getElementById('username').disabled = editingDefaultAdmin;
+            document.getElementById('role').disabled = editingDefaultAdmin;
+            document.getElementById('submitBtn').disabled = editingDefaultAdmin;
+            document.getElementById('submitBtn').classList.toggle('opacity-60', editingDefaultAdmin);
+            document.getElementById('submitBtn').classList.toggle('cursor-not-allowed', editingDefaultAdmin);
+            document.getElementById('defaultAdminNote').classList.toggle('hidden', !editingDefaultAdmin);
             document.getElementById('modalError').classList.add('hidden');
             document.getElementById('userModal').classList.remove('hidden');
         } catch (error) {
