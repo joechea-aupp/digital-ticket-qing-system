@@ -100,10 +100,14 @@ router.get('/dashboard', requireAuth, async (req, res) => {
 router.get('/users', requireAdmin, async (req, res) => {
     try {
         const users = await userModule.getAllUsers();
+        const usersWithFlags = users.map((user) => ({
+            ...user,
+            isDefaultAdmin: user.username === 'admin'
+        }));
         res.render('users', {
             title: 'Manage Users',
             user: req.session.user,
-            users: users
+            users: usersWithFlags
         });
     } catch (error) {
         console.error('Error fetching users:', error);
@@ -156,6 +160,7 @@ router.get('/api/users/:id', requireAdmin, async (req, res) => {
 router.put('/api/users/:id', requireAdmin, async (req, res) => {
     try {
         const { username, role } = req.body;
+        const userId = parseInt(req.params.id);
 
         if (!username || !role) {
             return res.status(400).json({ error: 'Username and role are required' });
@@ -165,7 +170,16 @@ router.put('/api/users/:id', requireAdmin, async (req, res) => {
             return res.status(400).json({ error: 'Role must be admin or agent' });
         }
 
-        const updatedUser = await userModule.updateUser(req.params.id, username, role);
+        const existingUser = await userModule.getUserById(userId);
+        if (!existingUser) {
+            return res.status(404).json({ error: 'User not found' });
+        }
+
+        if (existingUser.username === 'admin' && (role !== existingUser.role || username !== existingUser.username)) {
+            return res.status(400).json({ error: 'Default admin account role or username cannot be changed' });
+        }
+
+        const updatedUser = await userModule.updateUser(userId, username, role);
         res.json(updatedUser);
     } catch (error) {
         if (error.message.includes('UNIQUE')) {
@@ -179,16 +193,58 @@ router.put('/api/users/:id', requireAdmin, async (req, res) => {
 // Delete user (admin only)
 router.delete('/api/users/:id', requireAdmin, async (req, res) => {
     try {
+        const userId = parseInt(req.params.id);
         // Prevent deleting the current user
-        if (parseInt(req.params.id) === req.session.user.id) {
+        if (userId === req.session.user.id) {
             return res.status(400).json({ error: 'Cannot delete your own account' });
         }
 
-        await userModule.deleteUser(req.params.id);
+        const existingUser = await userModule.getUserById(userId);
+        if (!existingUser) {
+            return res.status(404).json({ error: 'User not found' });
+        }
+
+        if (existingUser.username === 'admin') {
+            return res.status(400).json({ error: 'Default admin account cannot be deleted' });
+        }
+
+        await userModule.deleteUser(userId);
         res.json({ message: 'User deleted successfully' });
     } catch (error) {
         console.error('Error deleting user:', error);
         res.status(500).json({ error: 'Failed to delete user' });
+    }
+});
+
+// Reset user password (admin only)
+router.post('/api/users/:id/reset-password', requireAdmin, async (req, res) => {
+    try {
+        const { newPassword } = req.body;
+        const userId = parseInt(req.params.id);
+
+        if (!newPassword) {
+            return res.status(400).json({ error: 'New password is required' });
+        }
+
+        if (newPassword.length < 4) {
+            return res.status(400).json({ error: 'Password must be at least 4 characters' });
+        }
+
+        // Get user to verify they exist
+        const user = await userModule.getUserById(userId);
+        if (!user) {
+            return res.status(404).json({ error: 'User not found' });
+        }
+
+        if (user.username === 'admin') {
+            return res.status(400).json({ error: 'Default admin password cannot be reset here' });
+        }
+
+        await userModule.updateUserPassword(userId, newPassword);
+        res.json({ message: 'Password reset successfully' });
+    } catch (error) {
+        console.error('Error resetting password:', error);
+        res.status(500).json({ error: 'Failed to reset password' });
     }
 });
 
