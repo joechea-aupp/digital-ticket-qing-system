@@ -78,27 +78,43 @@
         // Check if auto-use device name is enabled for this topic
         const autoUseDeviceName = currentTopic && currentTopic.auto_use_device_name;
 
+        // Helper function to get or create a unique device ID
+        function getDeviceId() {
+            const DEVICE_ID_KEY = 'deviceId';
+            let deviceId = localStorage.getItem(DEVICE_ID_KEY);
+            
+            if (!deviceId) {
+                // Generate a unique 4-digit ID
+                deviceId = Math.floor(1000 + Math.random() * 9000).toString();
+                localStorage.setItem(DEVICE_ID_KEY, deviceId);
+            }
+            
+            return deviceId;
+        }
+
         // Helper function to get device name
         function getDeviceName() {
             const userAgent = navigator.userAgent;
-            let deviceName = 'Unknown Device';
+            let deviceType = 'Unknown Device';
             
             // Try to determine device type
             if (/Android/i.test(userAgent)) {
-                deviceName = 'Android Device';
+                deviceType = 'Android Device';
             } else if (/iPhone/i.test(userAgent)) {
-                deviceName = 'iPhone';
+                deviceType = 'iPhone';
             } else if (/iPad/i.test(userAgent)) {
-                deviceName = 'iPad';
+                deviceType = 'iPad';
             } else if (/Macintosh/i.test(userAgent)) {
-                deviceName = 'Mac';
+                deviceType = 'Mac';
             } else if (/Windows/i.test(userAgent)) {
-                deviceName = 'Windows PC';
+                deviceType = 'Windows PC';
             } else if (/Linux/i.test(userAgent)) {
-                deviceName = 'Linux PC';
+                deviceType = 'Linux PC';
             }
             
-            return deviceName;
+            // Add unique device identifier
+            const deviceId = getDeviceId();
+            return `${deviceType} #${deviceId}`;
         }
 
         // Hide name input if auto-use device name is enabled
