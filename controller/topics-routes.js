@@ -45,13 +45,19 @@ router.get('/api/topics/:id', async (req, res) => {
 // Create new topic (admin only)
 router.post('/api/topics', requireAdmin, async (req, res) => {
     try {
-        const { name, prefix_id, description, is_default } = req.body;
+        const { name, prefix_id, description, is_default, auto_use_device_name } = req.body;
 
         if (!name || !prefix_id) {
             return res.status(400).json({ error: 'Name and prefix_id are required' });
         }
 
-        const topic = await topicModule.createTopic(name, prefix_id, description || '', is_default || false);
+        const topic = await topicModule.createTopic(
+            name, 
+            prefix_id, 
+            description || '', 
+            is_default || false, 
+            auto_use_device_name || false
+        );
         res.status(201).json(topic);
     } catch (error) {
         console.error('Error creating topic:', error);
@@ -68,13 +74,20 @@ router.post('/api/topics', requireAdmin, async (req, res) => {
 // Update topic (admin only)
 router.put('/api/topics/:id', requireAdmin, async (req, res) => {
     try {
-        const { name, prefix_id, description, is_default } = req.body;
+        const { name, prefix_id, description, is_default, auto_use_device_name } = req.body;
 
         if (!name || !prefix_id) {
             return res.status(400).json({ error: 'Name and prefix_id are required' });
         }
 
-        const topic = await topicModule.updateTopic(req.params.id, name, prefix_id, description || '', is_default || false);
+        const topic = await topicModule.updateTopic(
+            req.params.id, 
+            name, 
+            prefix_id, 
+            description || '', 
+            is_default || false, 
+            auto_use_device_name || false
+        );
         res.json(topic);
     } catch (error) {
         console.error('Error updating topic:', error);

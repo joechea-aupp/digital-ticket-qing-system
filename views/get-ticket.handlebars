@@ -34,7 +34,7 @@
             <div id="expiredAlert" class="mt-4 hidden rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-700" role="alert"></div>
 
             <section id="formContainer" class="mt-6 space-y-5">
-                <div>
+                <div id="nameInputContainer">
                     <label for="userName" class="text-sm font-semibold text-slate-600">Your Name</label>
                     <input
                         type="text"
@@ -74,6 +74,56 @@
 
         const connectedClasses = ["bg-emerald-500", "animate-pulse"];
         const disconnectedClasses = ["bg-rose-500"];
+
+        // Check if auto-use device name is enabled for this topic
+        const autoUseDeviceName = currentTopic && currentTopic.auto_use_device_name;
+
+        // Helper function to get or create a unique device ID
+        function getDeviceId() {
+            const DEVICE_ID_KEY = 'deviceId';
+            let deviceId = localStorage.getItem(DEVICE_ID_KEY);
+            
+            if (!deviceId) {
+                // Generate a unique 4-digit ID
+                deviceId = Math.floor(1000 + Math.random() * 9000).toString();
+                localStorage.setItem(DEVICE_ID_KEY, deviceId);
+            }
+            
+            return deviceId;
+        }
+
+        // Helper function to get device name
+        function getDeviceName() {
+            const userAgent = navigator.userAgent;
+            let deviceType = 'Unknown Device';
+            
+            // Try to determine device type
+            if (/Android/i.test(userAgent)) {
+                deviceType = 'Android Device';
+            } else if (/iPhone/i.test(userAgent)) {
+                deviceType = 'iPhone';
+            } else if (/iPad/i.test(userAgent)) {
+                deviceType = 'iPad';
+            } else if (/Macintosh/i.test(userAgent)) {
+                deviceType = 'Mac';
+            } else if (/Windows/i.test(userAgent)) {
+                deviceType = 'Windows PC';
+            } else if (/Linux/i.test(userAgent)) {
+                deviceType = 'Linux PC';
+            }
+            
+            // Add unique device identifier
+            const deviceId = getDeviceId();
+            return `${deviceType} #${deviceId}`;
+        }
+
+        // Hide name input if auto-use device name is enabled
+        if (autoUseDeviceName) {
+            const nameInputContainer = document.getElementById('nameInputContainer');
+            if (nameInputContainer) {
+                nameInputContainer.style.display = 'none';
+            }
+        }
 
         function connectWebSocket() {
             const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
@@ -400,13 +450,21 @@
         }
 
         function getTicket() {
-            const nameInput = document.getElementById('userName');
-            const name = nameInput.value.trim();
+            let name;
+            
+            if (autoUseDeviceName) {
+                // Use device name automatically
+                name = getDeviceName();
+            } else {
+                // Get name from input
+                const nameInput = document.getElementById('userName');
+                name = nameInput.value.trim();
 
-            if (!name) {
-                showError('Please enter your name');
-                nameInput.focus();
-                return;
+                if (!name) {
+                    showError('Please enter your name');
+                    nameInput.focus();
+                    return;
+                }
             }
 
             if (!ws || ws.readyState !== WebSocket.OPEN) {
@@ -451,11 +509,16 @@
 
         function showExpiredTicketMessage() {
             const alert = document.getElementById('expiredAlert');
-            alert.innerHTML = '<strong>Ticket Expired:</strong> All tickets have been expired by the administrator. Please enter your name to get a new ticket.';
+            const message = autoUseDeviceName 
+                ? '<strong>Ticket Expired:</strong> All tickets have been expired by the administrator. Please get a new ticket.'
+                : '<strong>Ticket Expired:</strong> All tickets have been expired by the administrator. Please enter your name to get a new ticket.';
+            alert.innerHTML = message;
             alert.classList.remove('hidden');
 
             myTicket = null;
-            document.getElementById('userName').value = '';
+            if (!autoUseDeviceName) {
+                document.getElementById('userName').value = '';
+            }
             document.getElementById('formContainer').classList.remove('hidden');
             document.getElementById('resultContainer').classList.add('hidden');
             document.getElementById('ticketsRemainingContainer').classList.add('hidden');
