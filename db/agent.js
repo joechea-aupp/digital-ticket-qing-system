@@ -47,6 +47,12 @@ async function updateAgentPause(id, isPaused) {
     return getAgentById(id);
 }
 
+// Update agent topic assignment
+async function updateAgentTopic(id, topicId = null, topicName = null) {
+    await dbRun('UPDATE agents SET topic_id = ?, topic_name = ? WHERE id = ?', [topicId, topicName, id]);
+    return getAgentById(id);
+}
+
 // Delete agent
 async function deleteAgent(id) {
     await dbRun('DELETE FROM agents WHERE id = ?', [id]);
@@ -58,5 +64,6 @@ module.exports = {
     getAgentById,
     getAllAgents,
     updateAgentPause,
+    updateAgentTopic,
     deleteAgent
 };

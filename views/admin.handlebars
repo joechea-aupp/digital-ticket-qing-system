@@ -118,6 +118,33 @@
         </div>
     </div>
 
+    <div id="changeTopicModal" class="fixed inset-0 z-50 hidden items-center justify-center bg-slate-900/40 p-4" role="dialog" aria-modal="true" aria-hidden="true">
+        <div class="relative w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl">
+            <div class="flex items-center justify-between">
+                <h2 class="text-lg font-semibold text-slate-900">Change Counter Topic</h2>
+                <button class="rounded-full p-1 text-slate-400 transition hover:text-slate-600" onclick="closeChangeTopicModal()" aria-label="Close modal">
+                    &times;
+                </button>
+            </div>
+            <div class="mt-5">
+                <p id="changeTopicAgentName" class="text-sm text-slate-600"></p>
+            </div>
+            <div class="mt-4">
+                <label for="changeTopicSelect" class="text-sm font-semibold text-slate-600">New Topic</label>
+                <select id="changeTopicSelect" class="mt-2 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-800 focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-200">
+                    <option value="">-- Select a topic --</option>
+                    {{#each topics}}
+                    <option value="{{this.id}}">{{this.name}} ({{this.prefix_id}})</option>
+                    {{/each}}
+                </select>
+            </div>
+            <div class="mt-6 flex items-center justify-end gap-3">
+                <button class="rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-600 transition hover:bg-slate-50" onclick="closeChangeTopicModal()">Cancel</button>
+                <button class="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-emerald-700" onclick="saveChangeTopic()">Update Topic</button>
+            </div>
+        </div>
+    </div>
+
     {{> layout-scripts }}
 
     <div id="actionMenuContainer" class="fixed inset-0 pointer-events-none z-50"></div>
@@ -283,6 +310,73 @@
             document.getElementById('agentTopic').value = '';
         }
 
+        function openChangeTopicModal(agentId) {
+            const agent = agents.find(a => a.id === agentId);
+            if (!agent) {
+                showError('Counter not found');
+                return;
+            }
+
+            if (agent.currentTicket) {
+                showError('Topic can only be changed when there is no active ticket being served');
+                return;
+            }
+
+            const modal = document.getElementById('changeTopicModal');
+            modal.dataset.agentId = agentId;
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+            modal.setAttribute('aria-hidden', 'false');
+
+            document.getElementById('changeTopicAgentName').textContent = `Counter: ${agent.name}`;
+            const select = document.getElementById('changeTopicSelect');
+            select.value = agent.topicId ? String(agent.topicId) : '';
+            select.focus();
+        }
+
+        function closeChangeTopicModal() {
+            const modal = document.getElementById('changeTopicModal');
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+            modal.setAttribute('aria-hidden', 'true');
+            delete modal.dataset.agentId;
+            document.getElementById('changeTopicSelect').value = '';
+            document.getElementById('changeTopicAgentName').textContent = '';
+        }
+
+        function saveChangeTopic() {
+            if (!ws || ws.readyState !== WebSocket.OPEN) {
+                showError('Not connected to server');
+                return;
+            }
+
+            const modal = document.getElementById('changeTopicModal');
+            const agentId = parseInt(modal.dataset.agentId, 10);
+            if (!agentId) {
+                showError('Counter not found');
+                return;
+            }
+
+            const select = document.getElementById('changeTopicSelect');
+            const topicId = select.value.trim();
+            if (!topicId) {
+                showError('Please select a topic');
+                return;
+            }
+
+            const selectedOption = select.options[select.selectedIndex];
+            const topicName = selectedOption.text.split(' (')[0];
+
+            ws.send(JSON.stringify({
+                action: 'updateAgentTopic',
+                agentId: agentId,
+                topicId: parseInt(topicId, 10),
+                topicName: topicName
+            }));
+
+            closeChangeTopicModal();
+        }
+
         function addAgent() {
             const agentNameInput = document.getElementById('agentName');
             const agentTopicInput = document.getElementById('agentTopic');
@@ -347,6 +441,9 @@
                     </button>
                     <button class="w-full px-4 py-2.5 text-left text-xs font-semibold text-sky-600 transition hover:bg-sky-50" onclick="togglePause(${agentId}, ${!isPaused}); closeAllMenus()">
                         ⏸ ${isPaused ? 'Resume' : 'Pause'}
+                    </button>
+                    <button class="w-full px-4 py-2.5 text-left text-xs font-semibold text-indigo-600 transition hover:bg-indigo-50 disabled:text-slate-300 disabled:hover:bg-white ${hasTicket ? 'opacity-50 cursor-not-allowed' : ''}" onclick="openChangeTopicModal(${agentId}); closeAllMenus()" ${hasTicket ? 'disabled' : ''}>
+                        ⇄ Change Topic
                     </button>
                     <button class="w-full px-4 py-2.5 text-left text-xs font-semibold text-green-600 transition hover:bg-green-50 disabled:text-slate-300 disabled:hover:bg-white ${!hasTicket ? 'opacity-50 cursor-not-allowed' : ''}" onclick="completeTicket(${agentId}); closeAllMenus()" ${!hasTicket ? 'disabled' : ''}>
                         ✔ Completed
@@ -495,15 +592,28 @@
                 }
             });
 
+            document.getElementById('changeTopicSelect').addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') {
+                    saveChangeTopic();
+                }
+            });
+
             document.addEventListener('keydown', (e) => {
                 if (e.key === 'Escape') {
                     closeModal();
+                    closeChangeTopicModal();
                 }
             });
 
             document.getElementById('addAgentModal').addEventListener('click', (e) => {
                 if (e.target.id === 'addAgentModal') {
                     closeModal();
+                }
+            });
+
+            document.getElementById('changeTopicModal').addEventListener('click', (e) => {
+                if (e.target.id === 'changeTopicModal') {
+                    closeChangeTopicModal();
                 }
             });
         });
