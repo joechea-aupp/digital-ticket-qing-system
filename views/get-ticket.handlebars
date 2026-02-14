@@ -24,6 +24,7 @@
                 </div>
             </div>
 
+
             <div id="ticketsRemainingContainer" class="mt-6 hidden rounded-xl border border-slate-100 bg-slate-50 px-4 py-4">
                 <p class="text-xs font-semibold uppercase tracking-wide text-slate-500">Tickets Until Your Turn</p>
                 <div id="ticketsRemainingDisplay" class="mt-2 text-3xl font-semibold text-emerald-600">0</div>
@@ -71,9 +72,16 @@
         let agents = [];
         let lastServedTicketId = null;
         let currentTopic = {{#if topic}}{{{json topic}}}{{else}}null{{/if}};
+        let wasYourTurn = false;
+        let audioPrimed = false;
 
         const connectedClasses = ["bg-emerald-500", "animate-pulse"];
         const disconnectedClasses = ["bg-rose-500"];
+
+        const notificationAudio = new Audio('/client_sound/ding.mp3');
+        notificationAudio.preload = 'auto';
+
+        const notificationSoundAllowed = currentTopic && currentTopic.allow_notification_sound;
 
         // Check if auto-use device name is enabled for this topic
         const autoUseDeviceName = currentTopic && currentTopic.auto_use_device_name;
@@ -123,6 +131,54 @@
             if (nameInputContainer) {
                 nameInputContainer.style.display = 'none';
             }
+        }
+
+        function primeNotificationAudio() {
+            if (!notificationSoundAllowed || audioPrimed) {
+                return;
+            }
+
+            const playPromise = notificationAudio.play();
+            if (playPromise && typeof playPromise.then === 'function') {
+                playPromise
+                    .then(() => {
+                        notificationAudio.pause();
+                        notificationAudio.currentTime = 0;
+                        audioPrimed = true;
+                    })
+                    .catch((error) => {
+                        console.warn('Unable to prime notification sound:', error);
+                    });
+            }
+        }
+
+        function setupSoundUnlockListeners() {
+            const unlock = () => {
+                primeNotificationAudio();
+            };
+
+            window.addEventListener('pointerdown', unlock, { once: true });
+            window.addEventListener('keydown', unlock, { once: true });
+        }
+
+        function playNotificationSound() {
+            if (!notificationSoundAllowed) {
+                return;
+            }
+
+            const playPromise = notificationAudio.play();
+            if (playPromise && typeof playPromise.catch === 'function') {
+                playPromise.catch((error) => {
+                    console.warn('Notification sound was blocked:', error);
+                });
+            }
+        }
+
+        function updateYourTurnState(isYourTurn) {
+            if (isYourTurn && !wasYourTurn) {
+                playNotificationSound();
+            }
+            wasYourTurn = isYourTurn;
         }
 
         function connectWebSocket() {
@@ -266,6 +322,7 @@
                 });
                 setTicketCardExpired(false);
                 setTicketCardYourTurn(true);
+                updateYourTurnState(true);
                 container.classList.remove('hidden');
                 return;
             }
@@ -290,6 +347,7 @@
                 });
                 setTicketCardExpired(true);
                 setTicketCardYourTurn(false);
+                updateYourTurnState(false);
                 container.classList.remove('hidden');
                 return;
             }
@@ -330,6 +388,7 @@
                     });
                     setTicketCardExpired(true);
                     setTicketCardYourTurn(false);
+                    updateYourTurnState(false);
                     container.classList.remove('hidden');
                     return;
                 }
@@ -347,6 +406,7 @@
                     });
                     setTicketCardExpired(true);
                     setTicketCardYourTurn(false);
+                    updateYourTurnState(false);
                     container.classList.remove('hidden');
                     return;
                 }
@@ -363,6 +423,7 @@
                 });
                 setTicketCardExpired(false);
                 setTicketCardYourTurn(false);
+                updateYourTurnState(false);
                 container.classList.remove('hidden');
                 return;
             }
@@ -377,6 +438,7 @@
                 });
                 setTicketCardExpired(false);
                 setTicketCardYourTurn(false);
+                updateYourTurnState(false);
                 container.classList.remove('hidden');
                 return;
             }
@@ -392,6 +454,7 @@
                 });
                 setTicketCardExpired(false);
                 setTicketCardYourTurn(true);
+                updateYourTurnState(true);
                 container.classList.remove('hidden');
             } else {
                 // ticketsRemaining > 0, show how many tickets ahead
@@ -402,6 +465,7 @@
                 });
                 setTicketCardExpired(false);
                 setTicketCardYourTurn(false);
+                updateYourTurnState(false);
                 container.classList.remove('hidden');
             }
         }
@@ -472,6 +536,8 @@
                 return;
             }
 
+            primeNotificationAudio();
+
             ws.send(JSON.stringify({
                 action: 'getTicket',
                 name: name,
@@ -492,6 +558,7 @@
 
         function resetForm() {
             myTicket = null;
+            updateYourTurnState(false);
             document.getElementById('userName').value = '';
             document.getElementById('formContainer').classList.remove('hidden');
             document.getElementById('resultContainer').classList.add('hidden');
@@ -516,6 +583,7 @@
             alert.classList.remove('hidden');
 
             myTicket = null;
+            updateYourTurnState(false);
             if (!autoUseDeviceName) {
                 document.getElementById('userName').value = '';
             }
@@ -534,6 +602,7 @@
 
         window.addEventListener('load', () => {
             loadTicketFromStorage();
+            setupSoundUnlockListeners();
             connectWebSocket();
         });
 

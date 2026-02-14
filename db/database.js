@@ -60,6 +60,7 @@ function initDatabase() {
                         description TEXT,
                         is_default INTEGER DEFAULT 0,
                         auto_use_device_name INTEGER DEFAULT 0,
+                        allow_notification_sound INTEGER DEFAULT 0,
                         created_at DATETIME DEFAULT CURRENT_TIMESTAMP
                     )
                 `, (err) => {
@@ -98,6 +99,7 @@ function initDatabase() {
                                     description TEXT,
                                     is_default INTEGER DEFAULT 0,
                                     auto_use_device_name INTEGER DEFAULT 0,
+                                    allow_notification_sound INTEGER DEFAULT 0,
                                     created_at DATETIME DEFAULT CURRENT_TIMESTAMP
                                 )
                             `, (err) => {
@@ -109,7 +111,7 @@ function initDatabase() {
                                 // Copy data, keeping only first occurrence of duplicate prefix_ids
                                 db.run(`
                                     INSERT INTO topics_new 
-                                    SELECT id, name, prefix_id, description, is_default, 0, created_at FROM topics
+                                    SELECT id, name, prefix_id, description, is_default, 0, 0, created_at FROM topics
                                     WHERE id IN (
                                         SELECT MIN(id) FROM topics GROUP BY prefix_id
                                     )
@@ -146,6 +148,17 @@ function initDatabase() {
                                         console.error('Error adding auto_use_device_name column:', err);
                                     } else {
                                         console.log('✓ Added auto_use_device_name column to topics table');
+                                    }
+                                });
+                            }
+
+                            const hasNotificationSound = rows.some(col => col.name === 'allow_notification_sound');
+                            if (!hasNotificationSound) {
+                                db.run(`ALTER TABLE topics ADD COLUMN allow_notification_sound INTEGER DEFAULT 0`, (err) => {
+                                    if (err) {
+                                        console.error('Error adding allow_notification_sound column:', err);
+                                    } else {
+                                        console.log('✓ Added allow_notification_sound column to topics table');
                                     }
                                 });
                             }

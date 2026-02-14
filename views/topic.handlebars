@@ -43,7 +43,7 @@
                                 <th class="px-6 py-3 text-left font-semibold">Name</th>
                                 <th class="px-6 py-3 text-left font-semibold">Prefix</th>
                                 <th class="px-6 py-3 text-left font-semibold">Description</th>
-                                <th class="px-6 py-3 text-center font-semibold">Default</th>
+                                <th class="px-6 py-3 text-center font-semibold">Options</th>
                                 <th class="px-6 py-3 text-center font-semibold">Copy URL</th>
                                 <th class="px-6 py-3 text-center font-semibold">Actions</th>
                             </tr>
@@ -58,16 +58,36 @@
                                 </td>
                                 <td class="px-6 py-4 text-slate-600">{{#if this.description}}{{this.description}}{{else}}<span class="text-slate-400">-</span>{{/if}}</td>
                                 <td class="px-6 py-4 text-center">
-                                    {{#if this.is_default}}
-                                        <span class="inline-flex items-center gap-1 rounded-full bg-emerald-100 px-3 py-1 text-xs font-semibold text-emerald-700">
-                                            <svg class="h-3 w-3" fill="currentColor" viewBox="0 0 20 20">
-                                                <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"></path>
-                                            </svg>
-                                            Default
-                                        </span>
-                                    {{else}}
-                                        <span class="text-slate-400">-</span>
-                                    {{/if}}
+                                    <span class="inline-flex items-center justify-center gap-2">
+                                        {{#if this.is_default}}
+                                            <span class="inline-flex h-7 w-7 items-center justify-center rounded-full bg-emerald-100 text-emerald-700" title="Default topic" aria-label="Default topic">
+                                                <svg class="h-3.5 w-3.5" fill="currentColor" viewBox="0 0 20 20">
+                                                    <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"></path>
+                                                </svg>
+                                            </span>
+                                        {{/if}}
+                                        {{#if this.auto_use_device_name}}
+                                            <span class="inline-flex h-7 w-7 items-center justify-center rounded-full bg-sky-100 text-sky-700" title="Auto device name" aria-label="Auto device name">
+                                                <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5a3 3 0 016 0v2m-9 4h12a2 2 0 012 2v6H4v-6a2 2 0 012-2z"></path>
+                                                </svg>
+                                            </span>
+                                        {{/if}}
+                                        {{#if this.allow_notification_sound}}
+                                            <span class="inline-flex h-7 w-7 items-center justify-center rounded-full bg-amber-100 text-amber-700" title="Notification sound" aria-label="Notification sound">
+                                                <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6 6 0 10-12 0v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0a3 3 0 11-6 0h6z"></path>
+                                                </svg>
+                                            </span>
+                                        {{/if}}
+                                        {{#unless this.is_default}}
+                                            {{#unless this.auto_use_device_name}}
+                                                {{#unless this.allow_notification_sound}}
+                                                    <span class="text-slate-400">-</span>
+                                                {{/unless}}
+                                            {{/unless}}
+                                        {{/unless}}
+                                    </span>
                                 </td>
                                 <td class="px-6 py-4 text-center">
                                     <button class="inline-flex items-center justify-center gap-2 rounded-lg bg-sky-100 px-3 py-1.5 text-xs font-semibold text-sky-700 shadow-sm transition hover:bg-sky-200" onclick="copyTopicUrl('{{this.prefix_id}}', '{{this.name}}')" title="Copy shareable URL">
@@ -111,7 +131,7 @@
                             </tr>
                             {{else}}
                             <tr>
-                                <td colspan="6" class="px-6 py-8 text-center text-slate-500">
+                                <td colspan="7" class="px-6 py-8 text-center text-slate-500">
                                     No topics available. Create one to get started.
                                 </td>
                             </tr>
@@ -125,8 +145,8 @@
 </div>
 
 <!-- Topic Modal -->
-<div id="topicModal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-sm">
-    <div class="w-full max-w-md rounded-2xl bg-white shadow-2xl ring-1 ring-slate-200/60">
+<div id="topicModal" class="hidden fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-slate-900/50 py-8 backdrop-blur-sm">
+    <div class="w-full max-w-md rounded-2xl bg-white shadow-2xl ring-1 ring-slate-200/60 max-h-[90vh] flex flex-col">
         <!-- Modal Header -->
         <div class="border-b border-slate-200 px-8 py-6">
             <h2 id="modalTitle" class="text-2xl font-bold tracking-tight text-slate-900">Add New Topic</h2>
@@ -134,7 +154,7 @@
         </div>
 
         <!-- Modal Content -->
-        <div class="px-8 py-6">
+        <div class="px-8 py-6 overflow-y-auto">
             <div id="modalError" class="mb-4 hidden rounded-lg border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700"></div>
             
             <form id="topicForm" class="space-y-5">
@@ -185,35 +205,57 @@
                     ></textarea>
                 </div>
 
-                <!-- Default Topic Checkbox -->
-                <div class="rounded-lg border border-slate-200 bg-slate-50/50 p-4">
-                    <label class="flex items-center gap-3 cursor-pointer">
-                        <input 
-                            type="checkbox" 
-                            id="topicIsDefault" 
-                            class="h-4 w-4 rounded border-slate-300 text-emerald-600 transition focus:ring-2 focus:ring-emerald-500"
-                        >
-                        <div>
-                            <span class="block text-sm font-semibold text-slate-700">Set as Default Topic</span>
-                            <span class="block text-xs text-slate-500 mt-0.5">Tickets will be assigned to this topic by default</span>
+                <!-- Topic Options -->
+                <details id="topicOptions" class="group rounded-xl border border-slate-200 bg-white/80">
+                    <summary class="flex cursor-pointer items-center justify-between gap-3 px-4 py-3 text-sm font-semibold text-slate-700">
+                        <span>
+                            Topic Options
+                            <span class="block text-xs font-normal text-slate-500 mt-0.5">Control default behavior for tickets under this topic.</span>
+                        </span>
+                        <span class="flex h-8 w-8 items-center justify-center rounded-full bg-slate-100 text-slate-500 transition group-open:rotate-180">
+                            <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                            </svg>
+                        </span>
+                    </summary>
+                    <div class="divide-y divide-slate-200 border-t border-slate-200">
+                        <div class="flex items-start justify-between gap-6 px-4 py-4">
+                            <label for="topicIsDefault" class="cursor-pointer">
+                                <span class="block text-sm font-semibold text-slate-700">Set as Default Topic</span>
+                                <span class="block text-xs text-slate-500 mt-0.5">Tickets will be assigned to this topic by default.</span>
+                            </label>
+                            <input 
+                                type="checkbox" 
+                                id="topicIsDefault" 
+                                class="mt-1 h-4 w-4 rounded border-slate-300 text-emerald-600 transition focus:ring-2 focus:ring-emerald-500"
+                            >
                         </div>
-                    </label>
-                </div>
 
-                <!-- Auto-use Device Name Toggle -->
-                <div class="rounded-lg border border-slate-200 bg-slate-50/50 p-4">
-                    <label class="flex items-center gap-3 cursor-pointer">
-                        <input 
-                            type="checkbox" 
-                            id="topicAutoUseDeviceName" 
-                            class="h-4 w-4 rounded border-slate-300 text-emerald-600 transition focus:ring-2 focus:ring-emerald-500"
-                        >
-                        <div>
-                            <span class="block text-sm font-semibold text-slate-700">Auto-use Device Name</span>
-                            <span class="block text-xs text-slate-500 mt-0.5">Use device name automatically instead of requiring customer to enter name</span>
+                        <div class="flex items-start justify-between gap-6 px-4 py-4">
+                            <label for="topicAutoUseDeviceName" class="cursor-pointer">
+                                <span class="block text-sm font-semibold text-slate-700">Auto-use Device Name</span>
+                                <span class="block text-xs text-slate-500 mt-0.5">Use device name automatically instead of asking customers to enter a name.</span>
+                            </label>
+                            <input 
+                                type="checkbox" 
+                                id="topicAutoUseDeviceName" 
+                                class="mt-1 h-4 w-4 rounded border-slate-300 text-emerald-600 transition focus:ring-2 focus:ring-emerald-500"
+                            >
                         </div>
-                    </label>
-                </div>
+
+                        <div class="flex items-start justify-between gap-6 px-4 py-4">
+                            <label for="topicAllowNotificationSound" class="cursor-pointer">
+                                <span class="block text-sm font-semibold text-slate-700">Allow Notification Sound</span>
+                                <span class="block text-xs text-slate-500 mt-0.5">Let customers enable a sound alert when it is their turn.</span>
+                            </label>
+                            <input 
+                                type="checkbox" 
+                                id="topicAllowNotificationSound" 
+                                class="mt-1 h-4 w-4 rounded border-slate-300 text-emerald-600 transition focus:ring-2 focus:ring-emerald-500"
+                            >
+                        </div>
+                    </div>
+                </details>
             </form>
         </div>
 
@@ -245,6 +287,7 @@
         document.getElementById('modalTitle').textContent = 'Add New Topic';
         document.getElementById('topicForm').reset();
         document.getElementById('modalError').classList.add('hidden');
+        document.getElementById('topicOptions').removeAttribute('open');
         document.getElementById('topicModal').classList.remove('hidden');
     }
 
@@ -267,10 +310,19 @@
                 document.getElementById('topicName').value = topic.name;
                 document.getElementById('topicPrefixId').value = topic.prefix_id;
                 document.getElementById('topicDescription').value = topic.description || '';
-                document.getElementById('topicIsDefault').checked = topic.is_default;
-                document.getElementById('topicAutoUseDeviceName').checked = topic.auto_use_device_name || false;
+                const isDefault = Boolean(topic.is_default);
+                const autoUseDeviceName = Boolean(topic.auto_use_device_name);
+                const allowNotificationSound = Boolean(topic.allow_notification_sound);
+                document.getElementById('topicIsDefault').checked = isDefault;
+                document.getElementById('topicAutoUseDeviceName').checked = autoUseDeviceName;
+                document.getElementById('topicAllowNotificationSound').checked = allowNotificationSound;
                 document.getElementById('modalTitle').textContent = 'Edit Topic';
                 document.getElementById('modalError').classList.add('hidden');
+                if (isDefault || autoUseDeviceName || allowNotificationSound) {
+                    document.getElementById('topicOptions').setAttribute('open', 'open');
+                } else {
+                    document.getElementById('topicOptions').removeAttribute('open');
+                }
                 document.getElementById('topicModal').classList.remove('hidden');
             })
             .catch(err => {
@@ -288,6 +340,7 @@
         const description = document.getElementById('topicDescription').value.trim();
         const is_default = document.getElementById('topicIsDefault').checked;
         const auto_use_device_name = document.getElementById('topicAutoUseDeviceName').checked;
+        const allow_notification_sound = document.getElementById('topicAllowNotificationSound').checked;
 
         if (!name || !prefix_id) {
             showError('Name and Prefix ID are required');
@@ -303,7 +356,7 @@
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify({ name, prefix_id, description, is_default, auto_use_device_name })
+                body: JSON.stringify({ name, prefix_id, description, is_default, auto_use_device_name, allow_notification_sound })
             });
 
             if (!response.ok) {

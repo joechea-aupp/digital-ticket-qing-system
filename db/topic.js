@@ -1,13 +1,13 @@
 const { dbRun, dbGet, dbAll } = require('./database');
 
 // Create new topic
-async function createTopic(name, prefix_id, description = '', is_default = false, auto_use_device_name = false) {
+async function createTopic(name, prefix_id, description = '', is_default = false, auto_use_device_name = false, allow_notification_sound = false) {
     try {
         const result = await dbRun(
-            'INSERT INTO topics (name, prefix_id, description, is_default, auto_use_device_name) VALUES (?, ?, ?, ?, ?)',
-            [name, prefix_id, description, is_default ? 1 : 0, auto_use_device_name ? 1 : 0]
+            'INSERT INTO topics (name, prefix_id, description, is_default, auto_use_device_name, allow_notification_sound) VALUES (?, ?, ?, ?, ?, ?)',
+            [name, prefix_id, description, is_default ? 1 : 0, auto_use_device_name ? 1 : 0, allow_notification_sound ? 1 : 0]
         );
-        return { id: result.lastID, name, prefix_id, description, is_default, auto_use_device_name };
+        return { id: result.lastID, name, prefix_id, description, is_default, auto_use_device_name, allow_notification_sound };
     } catch (error) {
         throw error;
     }
@@ -16,10 +16,11 @@ async function createTopic(name, prefix_id, description = '', is_default = false
 // Get topic by ID
 async function getTopicById(id) {
     try {
-        const topic = await dbGet('SELECT id, name, prefix_id, description, is_default, auto_use_device_name FROM topics WHERE id = ?', [id]);
+        const topic = await dbGet('SELECT id, name, prefix_id, description, is_default, auto_use_device_name, allow_notification_sound FROM topics WHERE id = ?', [id]);
         if (topic) {
             topic.is_default = !!topic.is_default; // Convert to boolean
             topic.auto_use_device_name = !!topic.auto_use_device_name; // Convert to boolean
+            topic.allow_notification_sound = !!topic.allow_notification_sound;
         }
         return topic;
     } catch (error) {
@@ -30,11 +31,12 @@ async function getTopicById(id) {
 // Get all topics
 async function getAllTopics() {
     try {
-        const topics = await dbAll('SELECT id, name, prefix_id, description, is_default, auto_use_device_name FROM topics ORDER BY id ASC');
+        const topics = await dbAll('SELECT id, name, prefix_id, description, is_default, auto_use_device_name, allow_notification_sound FROM topics ORDER BY id ASC');
         return topics.map(t => ({
             ...t,
             is_default: !!t.is_default, // Convert to boolean
-            auto_use_device_name: !!t.auto_use_device_name // Convert to boolean
+            auto_use_device_name: !!t.auto_use_device_name, // Convert to boolean
+            allow_notification_sound: !!t.allow_notification_sound
         }));
     } catch (error) {
         throw error;
@@ -44,10 +46,11 @@ async function getAllTopics() {
 // Get default topic
 async function getDefaultTopic() {
     try {
-        const topic = await dbGet('SELECT id, name, prefix_id, description, is_default, auto_use_device_name FROM topics WHERE is_default = 1 LIMIT 1');
+        const topic = await dbGet('SELECT id, name, prefix_id, description, is_default, auto_use_device_name, allow_notification_sound FROM topics WHERE is_default = 1 LIMIT 1');
         if (topic) {
             topic.is_default = !!topic.is_default;
             topic.auto_use_device_name = !!topic.auto_use_device_name;
+            topic.allow_notification_sound = !!topic.allow_notification_sound;
         }
         return topic;
     } catch (error) {
@@ -56,11 +59,11 @@ async function getDefaultTopic() {
 }
 
 // Update topic
-async function updateTopic(id, name, prefix_id, description, is_default, auto_use_device_name) {
+async function updateTopic(id, name, prefix_id, description, is_default, auto_use_device_name, allow_notification_sound) {
     try {
         await dbRun(
-            'UPDATE topics SET name = ?, prefix_id = ?, description = ?, is_default = ?, auto_use_device_name = ? WHERE id = ?',
-            [name, prefix_id, description, is_default ? 1 : 0, auto_use_device_name ? 1 : 0, id]
+            'UPDATE topics SET name = ?, prefix_id = ?, description = ?, is_default = ?, auto_use_device_name = ?, allow_notification_sound = ? WHERE id = ?',
+            [name, prefix_id, description, is_default ? 1 : 0, auto_use_device_name ? 1 : 0, allow_notification_sound ? 1 : 0, id]
         );
         return await getTopicById(id);
     } catch (error) {
@@ -100,10 +103,11 @@ async function setDefaultTopic(id) {
 // Get topic by prefix
 async function getTopicByPrefix(prefix) {
     try {
-        const topic = await dbGet('SELECT id, name, prefix_id, description, is_default, auto_use_device_name FROM topics WHERE prefix_id = ?', [prefix.toUpperCase()]);
+        const topic = await dbGet('SELECT id, name, prefix_id, description, is_default, auto_use_device_name, allow_notification_sound FROM topics WHERE prefix_id = ?', [prefix.toUpperCase()]);
         if (topic) {
             topic.is_default = !!topic.is_default; // Convert to boolean
             topic.auto_use_device_name = !!topic.auto_use_device_name; // Convert to boolean
+            topic.allow_notification_sound = !!topic.allow_notification_sound;
         }
         return topic;
     } catch (error) {

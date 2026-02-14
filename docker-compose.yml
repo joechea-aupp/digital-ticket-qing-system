@@ -9,6 +9,7 @@ services:
       - ./middleware:/usr/src/app/middleware
       - ./controller:/usr/src/app/controller
       - ./server.js:/usr/src/app/server.js
+      - ./public:/usr/src/app/public
     # restart: always
     entrypoint: ["/usr/src/app/docker_config/docker-entrypoint.sh"]
 
