@@ -54,7 +54,11 @@
                                 <td class="px-6 py-4">
                                     <div class="flex flex-wrap gap-2">
                                         <button class="rounded-lg bg-slate-900 px-3 py-1 text-xs font-semibold text-white shadow-sm transition hover:bg-slate-800" onclick="editUser({{this.id}}, {{this.isDefaultAdmin}})">Edit</button>
+                                        {{#if this.isDefaultAdmin}}
+                                        <button class="rounded-lg bg-amber-500 px-3 py-1 text-xs font-semibold text-white shadow-sm opacity-60 cursor-not-allowed" disabled title="Default admin password cannot be reset here">Reset Password</button>
+                                        {{else}}
                                         <button class="rounded-lg bg-amber-500 px-3 py-1 text-xs font-semibold text-white shadow-sm transition hover:bg-amber-600" onclick="showResetPasswordModal({{this.id}}, '{{this.username}}')">Reset Password</button>
+                                        {{/if}}
                                         {{#if this.isDefaultAdmin}}
                                         <button class="rounded-lg bg-rose-500 px-3 py-1 text-xs font-semibold text-white shadow-sm opacity-60 cursor-not-allowed" disabled title="Default admin account cannot be deleted">Delete</button>
                                         {{else}}

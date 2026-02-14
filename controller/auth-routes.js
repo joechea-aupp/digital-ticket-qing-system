@@ -236,6 +236,10 @@ router.post('/api/users/:id/reset-password', requireAdmin, async (req, res) => {
             return res.status(404).json({ error: 'User not found' });
         }
 
+        if (user.username === 'admin') {
+            return res.status(400).json({ error: 'Default admin password cannot be reset here' });
+        }
+
         await userModule.updateUserPassword(userId, newPassword);
         res.json({ message: 'Password reset successfully' });
     } catch (error) {
