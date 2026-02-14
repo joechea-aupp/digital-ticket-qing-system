@@ -225,7 +225,7 @@ router.post('/api/update-notification-sound', requireAuth, async (req, res) => {
             return res.status(400).json({ error: 'Notification sound is required' });
         }
 
-        const validSounds = ['happy-bell.wav', 'clear-announcement.wav', 'software-interface.wav'];
+        const validSounds = ['happy-bell.wav', 'clear-announcement.wav', 'software-interface.wav', 'pa_sound.mp3'];
         if (!validSounds.includes(notification_sound)) {
             return res.status(400).json({ error: 'Invalid notification sound' });
         }

@@ -186,6 +186,14 @@
             }, 300);
         }
 
+        function getNotificationSoundPath(soundFile) {
+            if (soundFile === 'pa_sound.mp3') {
+                return '/sounds/pa_sound.mp3';
+            }
+
+            return `/sounds/${soundFile}`;
+        }
+
         // Play user's preferred notification sound
         function playDingSound() {
             if (audioPermissionGranted === false) {
@@ -203,7 +211,7 @@
             if (!audioUnlocked) {
                 try {
                     const notificationSound = '{{notificationSound}}' || 'happy-bell.wav';
-                    const unlockerAudio = new Audio(`/sounds/${notificationSound}`);
+                    const unlockerAudio = new Audio(getNotificationSoundPath(notificationSound));
                     unlockerAudio.muted = true;
                     unlockerAudio.volume = 0;
                     unlockerAudio.play().then(() => {
@@ -227,7 +235,7 @@
         function playActualSound() {
             try {
                 const notificationSound = '{{notificationSound}}' || 'happy-bell.wav';
-                const audio = new Audio(`/sounds/${notificationSound}`);
+                const audio = new Audio(getNotificationSoundPath(notificationSound));
                 audio.volume = 0.5;
                 audio.play().catch(error => {
                     console.warn('Could not play sound:', error.name);
@@ -472,7 +480,7 @@
             
             try {
                 const notificationSound = '{{notificationSound}}' || 'happy-bell.wav';
-                const unlockerAudio = new Audio(`/sounds/${notificationSound}`);
+                const unlockerAudio = new Audio(getNotificationSoundPath(notificationSound));
                 unlockerAudio.muted = true;
                 unlockerAudio.volume = 0;
                 await unlockerAudio.play();
