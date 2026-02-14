@@ -347,6 +347,42 @@
             return;
         }
 
+        // Frontend validation: Check if setting as default
+        if (is_default && !editingTopicId) {
+            // Check if a default topic already exists
+            try {
+                const defaultTopicResponse = await fetch('/api/topics/default');
+                if (defaultTopicResponse.ok) {
+                    const defaultTopic = await defaultTopicResponse.json();
+                    const confirmed = confirm(`There is already a default topic: "${defaultTopic.name}". Setting this as default will replace it. Continue?`);
+                    if (!confirmed) {
+                        return;
+                    }
+                }
+            } catch (error) {
+                // No default topic exists (404), proceed
+                console.log('No existing default topic found');
+            }
+        } else if (is_default && editingTopicId) {
+            // Editing an existing topic and setting it as default
+            try {
+                const defaultTopicResponse = await fetch('/api/topics/default');
+                if (defaultTopicResponse.ok) {
+                    const defaultTopic = await defaultTopicResponse.json();
+                    // Only warn if the current default is different from the topic being edited
+                    if (defaultTopic.id !== parseInt(editingTopicId)) {
+                        const confirmed = confirm(`There is already a default topic: "${defaultTopic.name}". Setting this as default will replace it. Continue?`);
+                        if (!confirmed) {
+                            return;
+                        }
+                    }
+                }
+            } catch (error) {
+                // No default topic exists (404), proceed
+                console.log('No existing default topic found');
+            }
+        }
+
         try {
             const url = topicId ? `/api/topics/${topicId}` : '/api/topics';
             const method = topicId ? 'PUT' : 'POST';
