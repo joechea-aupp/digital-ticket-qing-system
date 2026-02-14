@@ -192,6 +192,34 @@ router.delete('/api/users/:id', requireAdmin, async (req, res) => {
     }
 });
 
+// Reset user password (admin only)
+router.post('/api/users/:id/reset-password', requireAdmin, async (req, res) => {
+    try {
+        const { newPassword } = req.body;
+        const userId = parseInt(req.params.id);
+
+        if (!newPassword) {
+            return res.status(400).json({ error: 'New password is required' });
+        }
+
+        if (newPassword.length < 4) {
+            return res.status(400).json({ error: 'Password must be at least 4 characters' });
+        }
+
+        // Get user to verify they exist
+        const user = await userModule.getUserById(userId);
+        if (!user) {
+            return res.status(404).json({ error: 'User not found' });
+        }
+
+        await userModule.updateUserPassword(userId, newPassword);
+        res.json({ message: 'Password reset successfully' });
+    } catch (error) {
+        console.error('Error resetting password:', error);
+        res.status(500).json({ error: 'Failed to reset password' });
+    }
+});
+
 // Change password
 router.post('/api/change-password', requireAuth, async (req, res) => {
     try {

@@ -54,6 +54,7 @@
                                 <td class="px-6 py-4">
                                     <div class="flex flex-wrap gap-2">
                                         <button class="rounded-lg bg-slate-900 px-3 py-1 text-xs font-semibold text-white shadow-sm transition hover:bg-slate-800" onclick="editUser({{this.id}})">Edit</button>
+                                        <button class="rounded-lg bg-amber-500 px-3 py-1 text-xs font-semibold text-white shadow-sm transition hover:bg-amber-600" onclick="showResetPasswordModal({{this.id}}, '{{this.username}}')">Reset Password</button>
                                         <button class="rounded-lg bg-rose-500 px-3 py-1 text-xs font-semibold text-white shadow-sm transition hover:bg-rose-600" onclick="deleteUser({{this.id}}, '{{this.username}}')">Delete</button>
                                     </div>
                                 </td>
@@ -150,10 +151,77 @@
     </div>
 </div>
 
+<!-- Reset Password Modal -->
+<div id="resetPasswordModal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-sm">
+    <div class="w-full max-w-md rounded-2xl bg-white shadow-2xl ring-1 ring-slate-200/60">
+        <!-- Modal Header -->
+        <div class="border-b border-slate-200 px-8 py-6">
+            <h2 class="text-2xl font-bold tracking-tight text-slate-900">Reset User Password</h2>
+            <p class="mt-1 text-sm text-slate-500">Set a new password for <span id="resetUsername" class="font-semibold text-slate-700"></span></p>
+        </div>
+
+        <!-- Modal Content -->
+        <div class="px-8 py-6">
+            <div id="resetModalError" class="mb-4 hidden rounded-lg border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700"></div>
+
+            <form id="resetPasswordForm" class="space-y-5">
+                <!-- New Password Field -->
+                <div>
+                    <label for="newPassword" class="block text-sm font-semibold text-slate-700 mb-2">
+                        New Password
+                        <span class="text-rose-500">*</span>
+                    </label>
+                    <input 
+                        type="password" 
+                        id="newPassword" 
+                        required 
+                        placeholder="Enter new password" 
+                        class="w-full px-4 py-2.5 rounded-lg border border-slate-300 bg-slate-50 text-slate-900 placeholder-slate-400 transition focus:border-emerald-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
+                    >
+                </div>
+
+                <!-- Confirm Password Field -->
+                <div>
+                    <label for="confirmPassword" class="block text-sm font-semibold text-slate-700 mb-2">
+                        Confirm Password
+                        <span class="text-rose-500">*</span>
+                    </label>
+                    <input 
+                        type="password" 
+                        id="confirmPassword" 
+                        required 
+                        placeholder="Confirm new password" 
+                        class="w-full px-4 py-2.5 rounded-lg border border-slate-300 bg-slate-50 text-slate-900 placeholder-slate-400 transition focus:border-emerald-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
+                    >
+                </div>
+            </form>
+        </div>
+
+        <!-- Modal Footer -->
+        <div class="border-t border-slate-200 px-8 py-4 flex gap-3 bg-slate-50/50">
+            <button 
+                type="button" 
+                onclick="closeResetPasswordModal()" 
+                class="flex-1 rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-slate-500/20"
+            >
+                Cancel
+            </button>
+            <button 
+                type="button" 
+                id="resetPasswordBtn" 
+                class="flex-1 rounded-lg bg-amber-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-amber-700 focus:outline-none focus:ring-2 focus:ring-amber-500/50"
+            >
+                Reset Password
+            </button>
+        </div>
+    </div>
+</div>
+
 {{> layout-scripts }}
 
 <script>
     let editingUserId = null;
+    let resettingUserId = null;
 
     function showCreateUserModal() {
         editingUserId = null;
@@ -271,6 +339,76 @@
     document.getElementById('userModal').addEventListener('click', (e) => {
         if (e.target === document.getElementById('userModal')) {
             closeUserModal();
+        }
+    });
+
+    // Reset Password Functions
+    function showResetPasswordModal(userId, username) {
+        resettingUserId = userId;
+        document.getElementById('resetUsername').textContent = username;
+        document.getElementById('resetPasswordForm').reset();
+        document.getElementById('resetModalError').classList.add('hidden');
+        document.getElementById('resetPasswordModal').classList.remove('hidden');
+    }
+
+    function closeResetPasswordModal() {
+        document.getElementById('resetPasswordModal').classList.add('hidden');
+        resettingUserId = null;
+        document.getElementById('resetPasswordForm').reset();
+        document.getElementById('resetModalError').classList.add('hidden');
+    }
+
+    document.getElementById('resetPasswordBtn').addEventListener('click', async (e) => {
+        e.preventDefault();
+        const newPassword = document.getElementById('newPassword').value.trim();
+        const confirmPassword = document.getElementById('confirmPassword').value.trim();
+        const errorDiv = document.getElementById('resetModalError');
+
+        if (!newPassword || !confirmPassword) {
+            errorDiv.textContent = 'All fields are required';
+            errorDiv.classList.remove('hidden');
+            return;
+        }
+
+        if (newPassword !== confirmPassword) {
+            errorDiv.textContent = 'Passwords do not match';
+            errorDiv.classList.remove('hidden');
+            return;
+        }
+
+        if (newPassword.length < 4) {
+            errorDiv.textContent = 'Password must be at least 4 characters';
+            errorDiv.classList.remove('hidden');
+            return;
+        }
+
+        try {
+            const response = await fetch(`/api/users/${resettingUserId}/reset-password`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ newPassword })
+            });
+
+            const data = await response.json();
+
+            if (!response.ok) {
+                errorDiv.textContent = data.error || 'Failed to reset password';
+                errorDiv.classList.remove('hidden');
+                return;
+            }
+
+            showMessage('Password reset successfully', 'success');
+            closeResetPasswordModal();
+        } catch (error) {
+            errorDiv.textContent = 'An error occurred';
+            errorDiv.classList.remove('hidden');
+        }
+    });
+
+    // Close reset password modal when clicking outside
+    document.getElementById('resetPasswordModal').addEventListener('click', (e) => {
+        if (e.target === document.getElementById('resetPasswordModal')) {
+            closeResetPasswordModal();
         }
     });
 </script>
