@@ -186,7 +186,7 @@
                 </div>
 
                 <!-- Topic Options -->
-                <details class="group rounded-xl border border-slate-200 bg-white/80" open>
+                <details id="topicOptions" class="group rounded-xl border border-slate-200 bg-white/80">
                     <summary class="flex cursor-pointer items-center justify-between gap-3 px-4 py-3 text-sm font-semibold text-slate-700">
                         <span>
                             Topic Options
@@ -267,6 +267,7 @@
         document.getElementById('modalTitle').textContent = 'Add New Topic';
         document.getElementById('topicForm').reset();
         document.getElementById('modalError').classList.add('hidden');
+        document.getElementById('topicOptions').removeAttribute('open');
         document.getElementById('topicModal').classList.remove('hidden');
     }
 
@@ -289,11 +290,19 @@
                 document.getElementById('topicName').value = topic.name;
                 document.getElementById('topicPrefixId').value = topic.prefix_id;
                 document.getElementById('topicDescription').value = topic.description || '';
-                document.getElementById('topicIsDefault').checked = topic.is_default;
-                document.getElementById('topicAutoUseDeviceName').checked = topic.auto_use_device_name || false;
-                document.getElementById('topicAllowNotificationSound').checked = topic.allow_notification_sound || false;
+                const isDefault = Boolean(topic.is_default);
+                const autoUseDeviceName = Boolean(topic.auto_use_device_name);
+                const allowNotificationSound = Boolean(topic.allow_notification_sound);
+                document.getElementById('topicIsDefault').checked = isDefault;
+                document.getElementById('topicAutoUseDeviceName').checked = autoUseDeviceName;
+                document.getElementById('topicAllowNotificationSound').checked = allowNotificationSound;
                 document.getElementById('modalTitle').textContent = 'Edit Topic';
                 document.getElementById('modalError').classList.add('hidden');
+                if (isDefault || autoUseDeviceName || allowNotificationSound) {
+                    document.getElementById('topicOptions').setAttribute('open', 'open');
+                } else {
+                    document.getElementById('topicOptions').removeAttribute('open');
+                }
                 document.getElementById('topicModal').classList.remove('hidden');
             })
             .catch(err => {
