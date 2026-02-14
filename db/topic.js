@@ -3,6 +3,11 @@ const { dbRun, dbGet, dbAll } = require('./database');
 // Create new topic
 async function createTopic(name, prefix_id, description = '', is_default = false, auto_use_device_name = false, allow_notification_sound = false) {
     try {
+        // If setting as default, reset all other defaults first
+        if (is_default) {
+            await dbRun('UPDATE topics SET is_default = 0');
+        }
+        
         const result = await dbRun(
             'INSERT INTO topics (name, prefix_id, description, is_default, auto_use_device_name, allow_notification_sound) VALUES (?, ?, ?, ?, ?, ?)',
             [name, prefix_id, description, is_default ? 1 : 0, auto_use_device_name ? 1 : 0, allow_notification_sound ? 1 : 0]
@@ -61,6 +66,11 @@ async function getDefaultTopic() {
 // Update topic
 async function updateTopic(id, name, prefix_id, description, is_default, auto_use_device_name, allow_notification_sound) {
     try {
+        // If setting as default, reset all other defaults first
+        if (is_default) {
+            await dbRun('UPDATE topics SET is_default = 0');
+        }
+        
         await dbRun(
             'UPDATE topics SET name = ?, prefix_id = ?, description = ?, is_default = ?, auto_use_device_name = ?, allow_notification_sound = ? WHERE id = ?',
             [name, prefix_id, description, is_default ? 1 : 0, auto_use_device_name ? 1 : 0, allow_notification_sound ? 1 : 0, id]
