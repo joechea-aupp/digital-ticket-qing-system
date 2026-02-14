@@ -185,50 +185,57 @@
                     ></textarea>
                 </div>
 
-                <!-- Default Topic Checkbox -->
-                <div class="rounded-lg border border-slate-200 bg-slate-50/50 p-4">
-                    <label class="flex items-center gap-3 cursor-pointer">
-                        <input 
-                            type="checkbox" 
-                            id="topicIsDefault" 
-                            class="h-4 w-4 rounded border-slate-300 text-emerald-600 transition focus:ring-2 focus:ring-emerald-500"
-                        >
-                        <div>
-                            <span class="block text-sm font-semibold text-slate-700">Set as Default Topic</span>
-                            <span class="block text-xs text-slate-500 mt-0.5">Tickets will be assigned to this topic by default</span>
+                <!-- Topic Options -->
+                <details class="group rounded-xl border border-slate-200 bg-white/80" open>
+                    <summary class="flex cursor-pointer items-center justify-between gap-3 px-4 py-3 text-sm font-semibold text-slate-700">
+                        <span>
+                            Topic Options
+                            <span class="block text-xs font-normal text-slate-500 mt-0.5">Control default behavior for tickets under this topic.</span>
+                        </span>
+                        <span class="flex h-8 w-8 items-center justify-center rounded-full bg-slate-100 text-slate-500 transition group-open:rotate-180">
+                            <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                            </svg>
+                        </span>
+                    </summary>
+                    <div class="divide-y divide-slate-200 border-t border-slate-200">
+                        <div class="flex items-start justify-between gap-6 px-4 py-4">
+                            <label for="topicIsDefault" class="cursor-pointer">
+                                <span class="block text-sm font-semibold text-slate-700">Set as Default Topic</span>
+                                <span class="block text-xs text-slate-500 mt-0.5">Tickets will be assigned to this topic by default.</span>
+                            </label>
+                            <input 
+                                type="checkbox" 
+                                id="topicIsDefault" 
+                                class="mt-1 h-4 w-4 rounded border-slate-300 text-emerald-600 transition focus:ring-2 focus:ring-emerald-500"
+                            >
                         </div>
-                    </label>
-                </div>
 
-                <!-- Auto-use Device Name Toggle -->
-                <div class="rounded-lg border border-slate-200 bg-slate-50/50 p-4">
-                    <label class="flex items-center gap-3 cursor-pointer">
-                        <input 
-                            type="checkbox" 
-                            id="topicAutoUseDeviceName" 
-                            class="h-4 w-4 rounded border-slate-300 text-emerald-600 transition focus:ring-2 focus:ring-emerald-500"
-                        >
-                        <div>
-                            <span class="block text-sm font-semibold text-slate-700">Auto-use Device Name</span>
-                            <span class="block text-xs text-slate-500 mt-0.5">Use device name automatically instead of requiring customer to enter name</span>
+                        <div class="flex items-start justify-between gap-6 px-4 py-4">
+                            <label for="topicAutoUseDeviceName" class="cursor-pointer">
+                                <span class="block text-sm font-semibold text-slate-700">Auto-use Device Name</span>
+                                <span class="block text-xs text-slate-500 mt-0.5">Use device name automatically instead of asking customers to enter a name.</span>
+                            </label>
+                            <input 
+                                type="checkbox" 
+                                id="topicAutoUseDeviceName" 
+                                class="mt-1 h-4 w-4 rounded border-slate-300 text-emerald-600 transition focus:ring-2 focus:ring-emerald-500"
+                            >
                         </div>
-                    </label>
-                </div>
 
-                <!-- Notification Sound Toggle -->
-                <div class="rounded-lg border border-slate-200 bg-slate-50/50 p-4">
-                    <label class="flex items-center gap-3 cursor-pointer">
-                        <input 
-                            type="checkbox" 
-                            id="topicAllowNotificationSound" 
-                            class="h-4 w-4 rounded border-slate-300 text-emerald-600 transition focus:ring-2 focus:ring-emerald-500"
-                        >
-                        <div>
-                            <span class="block text-sm font-semibold text-slate-700">Allow Notification Sound</span>
-                            <span class="block text-xs text-slate-500 mt-0.5">Let customers enable a sound alert when it is their turn</span>
+                        <div class="flex items-start justify-between gap-6 px-4 py-4">
+                            <label for="topicAllowNotificationSound" class="cursor-pointer">
+                                <span class="block text-sm font-semibold text-slate-700">Allow Notification Sound</span>
+                                <span class="block text-xs text-slate-500 mt-0.5">Let customers enable a sound alert when it is their turn.</span>
+                            </label>
+                            <input 
+                                type="checkbox" 
+                                id="topicAllowNotificationSound" 
+                                class="mt-1 h-4 w-4 rounded border-slate-300 text-emerald-600 transition focus:ring-2 focus:ring-emerald-500"
+                            >
                         </div>
-                    </label>
-                </div>
+                    </div>
+                </details>
             </form>
         </div>
 
