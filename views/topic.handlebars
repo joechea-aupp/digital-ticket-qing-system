@@ -269,9 +269,11 @@
 
 <script>
     let editingTopicId = null;
+    let editingTopicIsDefault = false;
 
     function showTopicModal() {
         editingTopicId = null;
+        editingTopicIsDefault = false;
         document.getElementById('modalTitle').textContent = 'Add New Topic';
         document.getElementById('topicForm').reset();
         document.getElementById('modalError').classList.add('hidden');
@@ -294,6 +296,7 @@
             .then(res => res.json())
             .then(topic => {
                 editingTopicId = topicId;
+                editingTopicIsDefault = Boolean(topic.is_default);
                 document.getElementById('topicId').value = topic.id;
                 document.getElementById('topicName').value = topic.name;
                 document.getElementById('topicPrefixId').value = topic.prefix_id;
@@ -326,6 +329,7 @@
         const description = document.getElementById('topicDescription').value.trim();
         const auto_use_device_name = document.getElementById('topicAutoUseDeviceName').checked;
         const allow_notification_sound = document.getElementById('topicAllowNotificationSound').checked;
+        const is_default = topicId ? editingTopicIsDefault : false;
 
         if (!name || !prefix_id) {
             showError('Name and Prefix ID are required');
@@ -341,7 +345,7 @@
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify({ name, prefix_id, description, is_default: false, auto_use_device_name, allow_notification_sound })
+                body: JSON.stringify({ name, prefix_id, description, is_default, auto_use_device_name, allow_notification_sound })
             });
 
             if (!response.ok) {
